@@ -81,9 +81,9 @@ get_p.gev_fit <- function(y_fit, pnt){
 
 #' @export
 ####### normaly not useful, the simple get_far handle the three cases
-get_far.gpd_fit <- function(y_fit, pnt0, pnt1, under_threshold=TRUE, ...){
-	p0 <- get_p.gpd_fit(y_fit, pnt0, under_threshold=under_threshold, ...)
-	p1 <- get_p.gpd_fit(y_fit, pnt1, under_threshold=under_threshold, ...)
+get_far.gpd_fit <- function(y_fit, pnt0, pnt1, under_threshold=FALSE){
+	p0 <- get_p.gpd_fit(y_fit, pnt0, under_threshold=under_threshold)
+	p1 <- get_p.gpd_fit(y_fit, pnt1, under_threshold=under_threshold)
 	ifelse(p0[1] == 0 & p1[1] == 0, FAR <- 1, FAR <- 1-(p0[1]/p1[1]))
 	res <- c(FAR,p0,p1)
 	names(res) <- c("FAR", "p0", "thresh0", "sc0", "sh0", "p1","thresh1", "sc1", "sh1")

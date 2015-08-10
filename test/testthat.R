@@ -80,7 +80,7 @@ set_env_gauss <- function(){
 		year <- rep(years,repet)
 		covariate <- (mapply(qnorm,mean=mu,sd=sigma,MoreArgs=list("p"=0.5)))
 		ydat <- data.frame("year"=year, "y"=NA, "mu_var"=covariate, "sig_var"=covariate)
-		xp <- 102
+		xp <- 106
 		t0 <- 1900
 		t1 <- 2150
 		this_env
@@ -130,7 +130,7 @@ print(get_ic(gauss_fit, boot_ic)(env))
 cov_pgpd <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gpd_fit, prof_ic)) 
 cov_pgev <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gev_fit, prof_ic)) 
 cov_pgauss <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gauss_fit, prof_ic)) 
-cov_pgpd(2, qthreshold=0.9)
+cov_pgpd(2, qthreshold=0.5)
 cov_pgev(2)
 cov_pgauss(2)
 
