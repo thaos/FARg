@@ -166,7 +166,8 @@ test_several_conf <- function(l_repet=1:3, l_xp=c(103, 106), l_t0=1900, l_t1=c(2
 		confs <- expand.grid(l_repet, l_xp, l_t0, l_t1, l_thresh)
 		names(confs)=c("repet","xp","t1","t0","qthreshold")
 		treat_conf <- function(repet, xp, t0, t1, thresh){
-				cov_func <- coverage(set_env_gauss_param(repet, xp, t0, t1), gen_data_gauss, get_theo_gauss, get_ic(gpd_fit, boot_ic))
+                    boot_ex <- function(xp, t0, t1, fit_func, ci_p=ci_p)boot_ic(xp, t0, t1, fit_func, ci_p=ci_p, under_threshold=TRUE)
+                    cov_func <- coverage(set_env_gauss_param(repet, xp, t0, t1), gen_data_gauss, get_theo_gauss, get_ic(gpd_fit,boot_ex))
 				cov_func(2, qthreshold=thresh)[[1]]
 		}
 		res=with(confs, mapply(treat_conf, repet=repet, xp=xp, t0=t0, t1=t1, thresh=qthreshold))

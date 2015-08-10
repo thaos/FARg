@@ -1,6 +1,6 @@
 simple_boot <- function(y_fit, statistic, R=250, seed=1, ...){
   nr <- nrow(y_fit$ydat)
-  set.seed(1)
+  #set.seed(1)
   i_matrix <- matrix(sample.int(nr, size=nr*R, replace=TRUE), nrow=nr)
   stat_func <- function(indices,y_fit,...){
     statistic(y_fit, indices, ...)

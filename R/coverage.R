@@ -12,8 +12,8 @@ coverage <- function(set_env, gen_data, get_theo, get_ic ){
     env <- set_env()
     ics[, 1] <- get_theo(env)
     for(i in seq.int(n)){
-        env <- gen_data(env)
-        ics[i,-1] <- get_ic(env,...)[1:3]
+        env_y <- gen_data(env)
+        ics[i,-1] <- get_ic(env_y,...)[1:3]
     }
     #     str( vapply(seq.int(n),function(x, ...)get_ic(env, ...)[1:3],FUN.VALUE=numeric(3), ...))
         #     ics[, -1] <- t(vapply(seq.int(n),function(x,...)get_ic(env, ...)[1:3], FUN.VALUE=numeric(3), ...))
