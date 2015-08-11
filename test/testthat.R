@@ -57,8 +57,8 @@ p_gpd <- prof_ic(xp, t0, t1, gpd_fit(ydat, qthreshold=0.9), ci_p=0.95 ,to_plot=T
 p_gev <- prof_ic(xp, t0, t1, gev_fit(ydat), ci_p=0.95 ,to_plot=TRUE)
 p_gauss <- prof_ic(xp, t0, t1, gauss_fit(ydat), ci_p=0.95 ,to_plot=TRUE)
 
-b_gpd <- boot_ic(xp, t0, t1, gpd_fit(ydat, qthreshold=0.9), ci_p=0.95) 
-b_gev <- boot_ic(xp, t0, t1, gev_fit(ydat), ci_p=0.95) 
+b_gpd <- boot_ic(xp, t0, t1, gpd_fit(ydat, qthreshold=0.9), ci_p=0.95, under_threshold=TRUE)
+b_gev <- boot_ic(xp, t0, t1, gev_fit(ydat), ci_p=0.95)
 b_gauss <- boot_ic(xp, t0, t1, gauss_fit(ydat), ci_p=0.95)
 
 
@@ -122,7 +122,7 @@ theo <- get_theo_gauss(env)
 get_ic <- function(fit_func, ic_func){
 		function(env, ci_p=0.95, ...){
 				list2env(as.list(env),envir=environment())
-				ic <- ic_func(xp, t0, t1, fit_func(ydat, ...), ci_p=ci_p) 
+				ic <- ic_func(xp, t0, t1, fit_func(ydat, ...), ci_p=ci_p)
 		}
 }
 print(get_ic(gauss_fit, prof_ic)(env))
@@ -131,17 +131,17 @@ print(get_ic(gev_fit, boot_ic)(env))
 print(get_ic(gpd_fit, boot_ic)(env, qthreshold=0.90))
 print(get_ic(gauss_fit, boot_ic)(env))
 
-cov_pgpd <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gpd_fit, prof_ic)) 
-cov_pgev <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gev_fit, prof_ic)) 
-cov_pgauss <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gauss_fit, prof_ic)) 
+cov_pgpd <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gpd_fit, prof_ic))
+cov_pgev <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gev_fit, prof_ic))
+cov_pgauss <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gauss_fit, prof_ic))
 cov_pgpd(2, qthreshold=0.9)
 cov_pgev(2)
 cov_pgauss(2)
 
 
-cov_bgpd <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gpd_fit, boot_ic)) 
-cov_bgev <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gev_fit, boot_ic)) 
-cov_bgauss <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gauss_fit, boot_ic)) 
+cov_bgpd <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gpd_fit, boot_ic))
+cov_bgev <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gev_fit, boot_ic))
+cov_bgauss <- coverage(set_env_gauss, gen_data_gauss, get_theo_gauss, get_ic(gauss_fit, boot_ic))
 cov_bgpd(2, qthreshold=0.9)
 cov_bgev(2)
 cov_bgauss(2)
@@ -170,13 +170,14 @@ test_several_conf <- function(l_repet=1:3, l_xp=c(103, 106), l_t0=1900, l_t1=c(2
 		confs <- expand.grid(l_repet, l_xp, l_t0, l_t1, l_thresh)
 		names(confs)=c("repet","xp","t1","t0","qthreshold")
 		treat_conf <- function(repet, xp, t0, t1, thresh){
-				cov_func <- coverage(set_env_gauss_param(repet, xp, t0, t1), gen_data_gauss, get_theo_gauss, get_ic(gpd_fit, boot_ic))
+                    boot_ex <- function(xp, t0, t1, fit_func, ci_p=ci_p)boot_ic(xp, t0, t1, fit_func, ci_p=ci_p, under_threshold=TRUE)
+                    cov_func <- coverage(set_env_gauss_param(repet, xp, t0, t1), gen_data_gauss, get_theo_gauss, get_ic(gpd_fit,boot_ex))
 				cov_func(2, qthreshold=thresh)[[1]]
-		}	
+		}
 		res=with(confs, mapply(treat_conf, repet=repet, xp=xp, t0=t0, t1=t1, thresh=qthreshold))
 		res=cbind(confs, res)
 		res
 }
-tsc <- test_several_conf() 
-		
+tsc <- test_several_conf()
+
 
