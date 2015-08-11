@@ -17,8 +17,12 @@ threshold <- predict(rq_fitted)
 gpd_fevd(ydat, threshold=threshold)
 gev_fevd(ydat)
 gpd_fit(ydat, qthreshold=0.9)
+plot(gpd_fit(ydat, qthreshold=0.9))
 gev_fit(ydat)
+plot(gev_fit(ydat))
 gauss_fit(ydat)
+plot(gauss_fit(ydat))
+
 
 t1 <- 2003
 t0 <- 1990
