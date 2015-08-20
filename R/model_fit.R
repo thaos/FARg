@@ -125,7 +125,7 @@ plot.gev_fit <- function(y_fit){
 
 #' @export
 plot.gpd_fit <- function(y_fit){
-  res <- fevd(y_fit$ydat$y, y_fit$ydat, threshold=y_fit$threshold, scale.fun=~sig_var, type="GP", method="MLE")
+  res <- fevd(y_fit$ydat$y, y_fit$ydat, threshold=predict(y_fit$rq_fitted),  scale.fun=~sig_var, type="GP", method="MLE")
   print(all.equal(y_fit$par,res$results$par))
   plot(res)
 }
@@ -145,7 +145,7 @@ plot.gauss_fit <- function(y_fit){
 	abline(a=0, b=1, col="blue")
 	plot(dens <- density(res_std), main="Transformed Data")
 	lines(dens$x, dnorm(x=dens$x), col="blue", lty=2)
-	plot(y_fit$y, type="l")
+	plot(y_fit$ydat$y, type="l")
 	p=1-c(0.5, 0.05, 0.01)
 	qXX=mapply(qnorm, mean=pred, sd=sqrt(var_res), MoreArgs=list(p=p))
 	for(i in seq_along(p)){
