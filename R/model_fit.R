@@ -125,7 +125,7 @@ plot.gev_fit <- function(y_fit){
 
 #' @export
 plot.gpd_fit <- function(y_fit){
-  res <- fevd(y_fit$ydat$y, y_fit$ydat, threshold=predict(y_fit$rq_fitted),  scale.fun=~sig_var, type="GP", method="MLE")
+  res <- fevd(y_fit$ydat$y, y_fit$ydat, threshold=predict(y_fit$rq_fitted), scale.fun=~sig_var, type="GP", method="MLE")
   print(all.equal(y_fit$par,res$results$par))
   plot(res)
 }
