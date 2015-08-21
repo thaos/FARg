@@ -34,17 +34,23 @@ gev_negll <- function(y, mu0, mu1, sig0, sig1, xi, mu_var, sig_var){
 
 #' @export
 gauss_fit <- function(ydat, init=NULL){
+	gauss_lik <- function(y, init, mu_var, sig_var){
+		gauss_negll(y, init[1], init[2], init[3], init[4], mu_var, sig_var)
+	}
 	if(is.null(init)){
 		y_fit <- lm(y~mu_var, data=ydat)
 		fit_res <- residuals(y_fit)
 		var_fit <- lm(fit_res^2~sig_var, data=ydat)
 		init <- c(coefficients(y_fit), coefficients(var_fit))
-	}
-	gauss_lik <- function(y, init, mu_var, sig_var){
-		gauss_negll(y, init[1], init[2], init[3], init[4], mu_var, sig_var)
+		print("--- Parameters Initialization -----")
+		print(paste("neg-likelihood =", gauss_lik(y=ydat$y, init=init, mu_var=ydat$mu_var, sig_var=ydat$sig_var)))
+		print(paste("mle =", do.call(paste, as.list(init))))
 	}
 	y_fit <- nlminb(start=init, gauss_lik, y=ydat$y, mu_var=ydat$mu_var, sig_var=ydat$sig_var)
-	y_fit$ydat <- ydat 
+	print("--- Parameters Optimization -----")
+	print(paste("neg-likelihood =", y_fit$objective))
+	print(paste("mle =", do.call(paste, as.list(y_fit$par))))
+	y_fit$ydat <- ydat
 	attr(y_fit, "class")= "gauss_fit"
 	y_fit
 }
