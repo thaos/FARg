@@ -34,23 +34,17 @@ gev_negll <- function(y, mu0, mu1, sig0, sig1, xi, mu_var, sig_var){
 
 #' @export
 gauss_fit <- function(ydat, init=NULL){
-	gauss_lik <- function(y, init, mu_var, sig_var){
-		gauss_negll(y, init[1], init[2], init[3], init[4], mu_var, sig_var)
-	}
 	if(is.null(init)){
 		y_fit <- lm(y~mu_var, data=ydat)
 		fit_res <- residuals(y_fit)
 		var_fit <- lm(fit_res^2~sig_var, data=ydat)
 		init <- c(coefficients(y_fit), coefficients(var_fit))
-		print("--- Parameters Initialization -----")
-		print(paste("neg-likelihood =", gauss_lik(y=ydat$y, init=init, mu_var=ydat$mu_var, sig_var=ydat$sig_var)))
-		print(paste("mle =", do.call(paste, as.list(init))))
+	}
+	gauss_lik <- function(y, init, mu_var, sig_var){
+		gauss_negll(y, init[1], init[2], init[3], init[4], mu_var, sig_var)
 	}
 	y_fit <- nlminb(start=init, gauss_lik, y=ydat$y, mu_var=ydat$mu_var, sig_var=ydat$sig_var)
-	print("--- Parameters Optimization -----")
-	print(paste("neg-likelihood =", y_fit$objective))
-	print(paste("mle =", do.call(paste, as.list(y_fit$par))))
-	y_fit$ydat <- ydat
+	y_fit$ydat <- ydat 
 	attr(y_fit, "class")= "gauss_fit"
 	y_fit
 }
@@ -81,7 +75,6 @@ gpd_fit <- function(ydat, qthreshold, init=NULL){
 	y_fit
 }
 	
-#' @export
 gpd_fevd <- function(ydat, threshold, init=NULL){
 	if(is.null(init)){
 		y_fit <- fevd(ydat$y, ydat, threshold=threshold, scale.fun=~sig_var, type="GP", method="MLE")
@@ -124,26 +117,30 @@ gev_fevd <- function(ydat, init=NULL){
 }
 
 #' @export
-plot.gev_fit <- function(x, ...){
-  res <- fevd(x$ydat$y, x$ydat, location.fun=~mu_var, scale.fun=~sig_var, method="MLE")
-  print(all.equal(x$par,res$results$par))
+plot.gev_fit <- function(y_fit){
+  res <- fevd(y_fit$ydat$y, y_fit$ydat, location.fun=~mu_var, scale.fun=~sig_var, method="MLE")
+  print(all.equal(y_fit$par,res$results$par))
   plot(res)
 }
 
 #' @export
-plot.gpd_fit <- function(x, ...){
-  res <- fevd(x$ydat$y, x$ydat, threshold=predict(x$rq_fitted), scale.fun=~sig_var, type="GP", method="MLE")
-  print(all.equal(x$par,res$results$par))
+plot.gpd_fit <- function(y_fit){
+<<<<<<< HEAD
+  res <- fevd(y_fit$ydat$y, y_fit$ydat, threshold=predict(y_fit$rq_fitted),  scale.fun=~sig_var, type="GP", method="MLE")
+=======
+  res <- fevd(y_fit$ydat$y, y_fit$ydat, threshold=predict(y_fit$rq_fitted), scale.fun=~sig_var, type="GP", method="MLE")
+>>>>>>> 2bbd73ae8d15cd66b1a52c6de5bee87905603401
+  print(all.equal(y_fit$par,res$results$par))
   plot(res)
 }
 
 
 #' @export
-plot.gauss_fit <- function(x, ...){
-	param <- x$par
-	pred <- param[1] + param[2] * x$ydat$mu_var
-	res <- x$ydat$y - pred
-	var_res <- param[3] +param[4] * x$ydat$sig_var
+plot.gauss_fit <- function(y_fit){
+	param <- y_fit$par
+	pred <- param[1] + param[2] * y_fit$ydat$mu_var
+	res <- y_fit$ydat$y - pred
+	var_res <- param[3] +param[4] * y_fit$ydat$sig_var
 	res_std <- res / sqrt(var_res)
 	par(mfrow=c(2,2))
 	plot(pred, res_std, main="Standardized Residuals vs Fitted", xlab="Fitted", ylab="Standardized Residuals")
@@ -152,7 +149,7 @@ plot.gauss_fit <- function(x, ...){
 	abline(a=0, b=1, col="blue")
 	plot(dens <- density(res_std), main="Transformed Data")
 	lines(dens$x, dnorm(x=dens$x), col="blue", lty=2)
-	plot(x$ydat$y, type="l")
+	plot(y_fit$ydat$y, type="l")
 	p=1-c(0.5, 0.05, 0.01)
 	qXX=mapply(qnorm, mean=pred, sd=sqrt(var_res), MoreArgs=list(p=p))
 	for(i in seq_along(p)){
@@ -162,7 +159,7 @@ plot.gauss_fit <- function(x, ...){
 }
 
 #' @export
-print.gauss_fit  <- print.gev_fit <- print.gpd_fit <- function(x, ...){
-	print(x[1:6])
+print.gauss_fit  <- print.gev_fit <- print.gpd_fit <- function(y_fit){
+	print(y_fit[1:6])
 }
 
