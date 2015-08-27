@@ -81,6 +81,7 @@ gpd_fit <- function(ydat, qthreshold, init=NULL){
 	y_fit
 }
 	
+#' @export
 gpd_fevd <- function(ydat, threshold, init=NULL){
 	if(is.null(init)){
 		y_fit <- fevd(ydat$y, ydat, threshold=threshold, scale.fun=~sig_var, type="GP", method="MLE")

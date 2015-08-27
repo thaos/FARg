@@ -111,9 +111,7 @@ get_far.default <- function(y_fit, pnt0, pnt1, ...){
 	res
 }
 
-
-
-
+#' @export
 set_pnt <- function(year, y, ydat){
 	i <- min(which.min(abs(year -ydat$year)))
 	c(ydat$mu_var[i], ydat$sig_var[i],y)
