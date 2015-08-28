@@ -29,29 +29,33 @@ gauss_negll <- function(y, mu, sig2){
 }
 
 #' @export
-gpd_negll <- function(y, threshold, sig0, sig1, xi, mu_var, sig_var) {
-	stopifnot(length(mu_var) == length(sig_var))
-	sig_v  <- sig0 + sig1*sig_var
-	levd(x=y, threshold=threshold, scale=sig_v, shape=xi, type="GP",npy=1)
+gpd_negll <- function(y, threshold, sig, xi) {
+  n <- length(y)
+  stopifnot(length(threshold) == n & length(sig) == n)
+	levd(x=y, threshold=threshold, scale=sig, shape=xi, type="GP",npy=1)
 }
 
 #' @export
-gev_negll <- function(y, mu0, mu1, sig0, sig1, xi, mu_var, sig_var){
-	stopifnot(length(mu_var) == length(sig_var))
-	sig_v <- sig0 + sig1*sig_var
-	mu_v <- mu0 + mu1*mu_var
-	levd(x=y, location=mu_v, scale=sig_v, shape=xi, type="GEV")
+gev_negll <- function(y, mu, sig, xi){
+  n <- length(y)
+  stopifnot(length(mu) == n & length(sig) == n)
+	levd(x=y, location=mu, scale=sig, shape=xi, type="GEV")
+}
+
+format_init.gauss <- function(init, mu_mod, sig_mod){
+  nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
+  mu <- init[1:nb_mup]
+  sig2 <- init[-(1:nb_mup)]
+  list("mu"=mu, "sig2"=sig2)
 }
 
 #' @export
 gauss_fit <- function(y, data, mu_mod, sig2_mod, init=NULL){
-  env <- environment()
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
 	gauss_lik <- function(init){
-    mu_init <- init[1:nb_mup]
-    sig2_init <- init[-(1:nb_mup)]
-    mu <- get_param(mu_init, mu_mod, data)
-    sig2 <- get_param(sig2_init, sig2_mod, data)
+    init_f <- format_init.gauss(init, mu_mod, sig_mod)
+    mu <- get_param(init_f$mu, mu_mod, data)
+  sig2 <- get_param(init_f$sig2, sig2_mod, data)
 		gauss_negll(y, mu, sig2) 
 	}
 	if(is.null(init)){
@@ -75,26 +79,37 @@ gauss_fit <- function(y, data, mu_mod, sig2_mod, init=NULL){
 	y_fit
 }
 
+format_init.gpd <- function(init,  sig_mod){
+  nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
+  sig <- init[1:nb_sigp]
+  xi <- init[-(1:nb_sigp)]
+  list("sig"=sig, "xi"=xi)
+}
+
 #' @export
-gpd_fit <- function(ydat, qthreshold, init=NULL){
-	if(is.null(ydat$sig_var)) ydat$sig_var <- ydat$mu_var
-	rq_fitted <- rq(y~mu_var, data=ydat, tau=qthreshold)
+gpd_fit <- function(y, data, mu_mod, sig_mod, qthreshold, init=NULL){
+	rq_fitted <- rq(complete_formula(y, mu_mod),data=data, tau=qthreshold)
 	threshold <- predict(rq_fitted)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
-		init <- gpd_fevd(ydat, threshold)$results
+		init <- gpd_fevd(y, data, threshold, sig_mod=sig_mod)$results
 		print(paste("neg-likelihood =", init$value))
 		print(paste("mle =", do.call(paste, as.list(init$par))))
 		init <- init$par
 	}
-	gpd_lik <- function(y, init, threshold, mu_var, sig_var){
-		gpd_negll(y, threshold, init[1], init[2], init[3], mu_var, sig_var) 
+	gpd_lik <- function(init){
+    init_f <- format_init.gpd(init,  sig_mod)
+    sig <- get_param(init_f$sig , sig_mod, data)
+		gpd_negll(y, threshold, sig, init_f$xi) 
 	}
-	y_fit=nlminb(start=init, gpd_lik, y=ydat$y, threshold=threshold, mu_var=ydat$mu_var, sig_var=ydat$sig_var)
+	y_fit=nlminb(start=init, gpd_lik) 
 	print("--- Parameters Optimization -----")
 	print(paste("neg-likelihood =", y_fit$objective))
 	print(paste("mle =", do.call(paste, as.list(y_fit$par))))
-	y_fit$ydat <- ydat 
+	y_fit$y <- y 
+	y_fit$data <- data 
+	y_fit$mu_mod <- mu_mod
+	y_fit$sig_mod <- sig_mod
 	y_fit$rq_fitted <- rq_fitted 
 	y_fit$rate <- mean(ydat$y>threshold)
 	attr(y_fit, "class")= "gpd_fit"
@@ -102,70 +117,95 @@ gpd_fit <- function(ydat, qthreshold, init=NULL){
 }
 	
 #' @export
-gpd_fevd <- function(ydat, threshold, init=NULL){
+gpd_fevd <- function(y, data, threshold, sig_mod=~1, init=NULL){
 	if(is.null(init)){
-		y_fit <- fevd(ydat$y, ydat, threshold=threshold, scale.fun=~sig_var, type="GP", method="MLE")
+		y_fit <- fevd(y, data, threshold=threshold, scale.fun=sig_mod, type="GP", method="MLE")
 	} else{
-		y_fit <- fevd(ydat$y, ydat, threshold=threshold, scale.fun=~sig_var, type="GP", method="MLE", initial=init)
+		y_fit <- fevd(y, data, threshold=threshold, scale.fun=sig_mod, type="GP", method="MLE", initial=init)
 	}
 	y_fit
 }
 
+format_init.gev <- function(init, mu_mod, sig_mod){
+  nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
+  nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
+  mu <- init[1:nb_mup]
+  sig <- init[nb_mup + (1:nb_sigp)]
+  xi <- init[-(1:(nb_sigp + nb_mup))]
+  list("mu"=mu, "sig"=sig, "xi"=xi)
+}
+
 #' @export
-gev_fit <- function(ydat, init=NULL){
-	if(is.null(ydat$sig_var)) ydat$sig_var <- ydat$mu_var
+gev_fit <- function(y, data, mu_mod, sig_mod, init=NULL){
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
-		init <- gev_fevd(ydat)$results
+		init <- gev_fevd(y, data, mu_mod=mu_mod, sig_mod=sig_mod)$results
 		print(paste("neg-likelihood =", init$value))
 		print(paste("mle =", do.call(paste, as.list(init$par))))
 		init <- init$par
 	}
-	gev_lik <- function(y, init, mu_var, sig_var){
-		gev_negll(y, init[1], init[2], init[3], init[4], init[5], mu_var, sig_var) 
+	gev_lik <- function(init){
+    init_f <- format_init.gev(init, mu_mod, sig_mod)
+    mu <- get_param(init_f$mu, mu_mod, data)
+    sig <- get_param(init_f$sig, sig_mod, data)
+		gev_negll(y, mu, sig, init_f$xi) 
 	}
-	y_fit=nlminb(start=init, gev_lik, y=ydat$y, mu_var=ydat$mu_var, sig_var=ydat$sig_var)
+	y_fit=nlminb(start=init, gev_lik)
 	print("--- Parameters Optimization -----")
 	print(paste("neg-likelihood =", y_fit$objective))
 	print(paste("mle =", do.call(paste, as.list(y_fit$par))))
 	attr(y_fit, "class")= "gev_fit"
-	y_fit$ydat <- ydat 
+	y_fit$y <- y 
+	y_fit$data <- data 
+	y_fit$mu_mod <- mu_mod
+	y_fit$sig_mod <- sig_mod
 	y_fit
 }
 	
 #' @export
-gev_fevd <- function(ydat, init=NULL){
+gev_fevd <- function(y, data, mu_mod=~1, sig_mod=~1, init=NULL){
 	if(is.null(init)){
-		y_fit=fevd(ydat$y, ydat, location.fun=~mu_var, scale.fun=~sig_var, method="MLE")
+		y_fit=fevd(y, data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE")
 	} else{
-		y_fit=fevd(ydat$y, ydat, location.fun=~mu_var, scale.fun=~sig_var, method="MLE", initial=init)
+		y_fit=fevd(y, data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE", initial=init)
 	}
 	y_fit
 }
 
 #' @export
 plot.gev_fit <- function(x, ...){
-  res <- fevd(x$ydat$y, x$ydat, location.fun=~mu_var, scale.fun=~sig_var, method="MLE")
+  res <- fevd(x$y, x$data, location.fun=x$mu_mod, scale.fun=x$sig_mod, method="MLE")
   print(all.equal(x$par,res$results$par))
   plot(res)
 }
 
 #' @export
 plot.gpd_fit <- function(x, ...){
-  res <- fevd(x$ydat$y, x$ydat, threshold=predict(x$rq_fitted), scale.fun=~sig_var, type="GP", method="MLE")
+  res <- fevd(x$y, x$data, threshold=predict(x$rq_fitted), scale.fun=x$sig_mod, type="GP", method="MLE")
   print(all.equal(x$par,res$results$par))
   plot(res)
 }
 
+compute_par <- function(object, newdata, ...){
+  UseMethod("compute_par")
+}
+
+compute_par.gpd_fit <- function(object, newdata, ...){
+  threshold <- predict(object$rq_fitted, newdata)
+  init_f <- format_init.gpd(object$par,  object$sig_mod)
+  data.frame("threshold"=threshold, "sig"=get_param(init_f$sig , object$sig_mod, newdata), "xi"=init_f$xi)
+}
+
+compute_par.gev_fit <- function(object, newdata, ...){
+  init_f <- format_init.gev(object$par, object$mu_mod, object$sig_mod)
+  data.frame("mu"=get_param(init_f$mu, object$mu_mod, newdata), "sig"=get_param(init_f$sig, sig_mod, newdata), "xi"=init_f$xi)
+}
+
+
 #' @export
 compute_par.gauss_fit <- function(object, newdata, ...){
-  mu_mod <- object$mu_mod
-  sig2_mod <- object$sig2_mod
-  nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
-  nb_sig2p <- length(attr(terms(sig2_mod), "term.labels"))+attr(terms(sig2_mod),"intercept")
-  mu_par <- object$par[1:nb_mup]
-  sig2_par <- object$par[-(1:nb_mup)]
-  data.frame("mu"=get_param(mu_par, mu_mod, newdata), "sig2"=get_param(sig2_par, sig2_mod, newdata))
+  init_f <- format_init.gauss(object$par,  object$mu_mod, object$sig2_mod)
+  data.frame("mu"=get_param(init_f$mu, object$mu_mod, newdata), "sig2"=get_param(init_f$sig2, object$sig2_mod, newdata))
 }
 
 #' @export
