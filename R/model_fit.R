@@ -198,7 +198,7 @@ compute_par.gpd_fit <- function(object, newdata, ...){
 
 compute_par.gev_fit <- function(object, newdata, ...){
   init_f <- format_init.gev(object$par, object$mu_mod, object$sig_mod)
-  data.frame("mu"=get_param(init_f$mu, object$mu_mod, newdata), "sig"=get_param(init_f$sig, sig_mod, newdata), "xi"=init_f$xi)
+  data.frame("mu"=get_param(init_f$mu, object$mu_mod, newdata), "sig"=get_param(init_f$sig, object$sig_mod, newdata), "xi"=init_f$xi)
 }
 
 

@@ -13,26 +13,18 @@ get_p <- function(y_fit, ...){
 
 #' @export
 get_p.gauss_fit <- function(y_fit, pnt, ...){
-	m_cord=pnt[1]
-	s_cord=pnt[2]
-	y_cord=pnt[3]
-	mle <- y_fit$par
-	mu <- mle[1] + m_cord * mle[2]
-	sig <- mle[3] + s_cord * mle[4]
-	res=pnorm(y_cord, mean=mu, sd=sqrt(sig), lower.tail=FALSE)
-	res=c(res, mu, sig)
+  par <- compute_par.gauss_fit(y_fit, newdata=pnt)
+	res=pnorm(pnt$y, mean=par$mu, sd=sqrt(par$sig2), lower.tail=FALSE)
+	res=c(res, par$mu, par$sig)
 	names(res)=c("p","mu","sigma2")
 	res
 }
 
 #' @export
 get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
-	m_cord <- pnt[1]
-	s_cord <- pnt[2]
-	y_cord <- pnt[3]
-	newdat <- data.frame("mu_var"=m_cord)
-	threshold <- predict(y_fit$rq_fitted, newdata=newdat)
+	threshold <- predict(y_fit$rq_fitted, newdata=pnt)
 	stopifnot(under_threshold | y_cord >= threshold)
+  # A remplacer !!!
 	mle <- y_fit$par
 	sig <- mle[1] + s_cord * mle[2]
 	sha <- mle[3]
@@ -57,15 +49,9 @@ get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
 
 #' @export
 get_p.gev_fit <- function(y_fit, pnt, ...){
-	m_cord <- pnt[1]
-	s_cord <- pnt[2]
-	y_cord <- pnt[3]
-	mle <- y_fit$par
-	mu <- mle[1] + m_cord * mle[2]
-	sig <- mle[3] + s_cord * mle[4]
-	sha <- mle[5]
-	res <- pevd(y_cord, loc=mu, scale=sig, shape=sha ,lower.tail=FALSE)
-	res <- c(res, mu, sig, sha)
+  par <- compute_par.gev_fit(y_fit, newdata=pnt)
+	res <- pevd(pnt$y, loc=par$mu, scale=par$sig, shape=par$xi ,lower.tail=FALSE)
+	res <- c(res, par$mu, par$sig, par$xi)
 	names(res) <- c("p","mu","sigma","shape")
 	res
 }
@@ -114,5 +100,5 @@ get_far.default <- function(y_fit, pnt0, pnt1, ...){
 #' @export
 set_pnt <- function(year, y, ydat){
 	i <- min(which.min(abs(year -ydat$year)))
-	c(ydat$mu_var[i], ydat$sig_var[i],y)
+	cbind(y,ydat[i,])
 }

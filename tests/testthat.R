@@ -21,31 +21,31 @@ compute_par(ga_fit, tas)
 plot(ga_fit)
 
 y=tas$avg_gbl_tas
-
+ydat_p=tas[,-2]
 
 t1 <- 2003
 t0 <- 1990
 xp <- 1.6
-pnt1 <- set_pnt(t0, xp, ydat)
-pnt0 <- set_pnt(t0, xp, ydat)
+pnt1 <- set_pnt(t0, xp, ydat_p)
+pnt0 <- set_pnt(t0, xp, ydat_p)
 
-get_p(gauss_fit(ydat), pnt1)
-get_far(gauss_fit(ydat), pnt0, pnt1)
+get_p(ga_fit ,pnt1)
+get_far(ga_fit, pnt0, pnt1)
 
-get_p(gpd_fit(ydat, qthreshold=0.9), pnt1)
-get_far(gpd_fit(ydat, qthreshold=0.9), pnt0, pnt1)
-get_far(gpd_fit(ydat, qthreshold=0.9), pnt0, pnt1, under_threshold=TRUE)
+get_p(gp_fit, pnt1)
+get_far(gp_fit, pnt0, pnt1)
+get_far(gp_fit, pnt0, pnt1, under_threshold=TRUE)
 
-get_p(gev_fit(ydat), pnt1)
-get_far(gev_fit(ydat), pnt0, pnt1)
+get_p(ge_fit, pnt1)
+get_far(ge_fit, pnt0, pnt1)
 
-p_gpd <- prof_ic(xp, t0, t1, gpd_fit(ydat, qthreshold=0.9), ci_p=0.95 ,to_plot=TRUE)
-p_gev <- prof_ic(xp, t0, t1, gev_fit(ydat), ci_p=0.95 ,to_plot=TRUE)
-p_gauss <- prof_ic(xp, t0, t1, gauss_fit(ydat), ci_p=0.95 ,to_plot=TRUE)
+p_gpd <- prof_ic(xp, t0, t1, gp_fit, ci_p=0.95 ,to_plot=TRUE)
+p_gev <- prof_ic(xp, t0, t1, ge_fit, ci_p=0.95 ,to_plot=TRUE)
+p_gauss <- prof_ic(xp, t0, t1, ga_fit, ci_p=0.95 ,to_plot=TRUE)
 
-b_gpd <- boot_ic(xp, t0, t1, gpd_fit(ydat, qthreshold=0.9), ci_p=0.95, under_threshold=TRUE)
-b_gev <- boot_ic(xp, t0, t1, gev_fit(ydat), ci_p=0.95)
-b_gauss <- boot_ic(xp, t0, t1, gauss_fit(ydat), ci_p=0.95)
+b_gpd <- boot_ic(xp, t0, t1, gp_fit, ci_p=0.95, under_threshold=TRUE)
+b_gev <- boot_ic(xp, t0, t1, ge_fit, ci_p=0.95)
+b_gauss <- boot_ic(xp, t0, t1, ga_fit, ci_p=0.95)
 
 
 
