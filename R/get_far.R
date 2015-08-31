@@ -32,7 +32,7 @@ get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
 		res <- pevd(y_cord, threshold=threshold, scale=par$sig, shape=par$xi, type="GP", lower.tail=FALSE) * phi
 	else {
 		findP <- function(par, pnt, y_fit){
-      print((complete_formula(y_fit$y, y_fit$mu_mod)))
+      print(as.formula((complete_formula(y_fit$y, y_fit$mu_mod))))
       rq_fitted <- rq(as.formula(complete_formula(y_fit$y, y_fit$mu_mod)), data=y_fit$data, tau=par)
       #       rq_fitted <- rq(y_fit$y~avg_gbl_tas , data=y_fit$data, tau=par)
 			predicted <- predict.rq(rq_fitted, newdata=pnt)

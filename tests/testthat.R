@@ -26,13 +26,15 @@ ydat_p=tas[,-2]
 t1 <- 2003
 t0 <- 1990
 xp <- 1.6
-pnt1 <- set_pnt(t0, xp, ydat_p)
+pnt1 <- set_pnt(t1, xp, ydat_p)
 pnt0 <- set_pnt(t0, xp, ydat_p)
 
 get_p(ga_fit ,pnt1)
 get_far(ga_fit, pnt0, pnt1)
 
 get_p(gp_fit, pnt1)
+pnt1.1 <- set_pnt(t0, .6, ydat_p)
+get_p(gp_fit, pnt1.1, under_threshold=TRUE)
 get_far(gp_fit, pnt0, pnt1)
 get_far(gp_fit, pnt0, pnt1, under_threshold=TRUE)
 
