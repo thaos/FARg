@@ -1,4 +1,4 @@
-#' @importFrom alabama auglag 
+#' @importFrom alabama auglag
 
 constrain <- function(y_fit, pnt0, pnt1, R=0.5, ...){
 	res=function(par){
@@ -30,7 +30,9 @@ optimize_constr <- function(y_fit, pnt0, pnt1, R){
 
 optimize_profile.gpd_fit <- function(y_fit, pnt0, pnt1, R){
 	gpd_lik <- function(init){
-		gpd_negll(y_fit$ydat$y, predict(y_fit$rq_fitted), init[1], init[2], init[3], y_fit$ydat$mu_var, y_fit$ydat$sig_var)
+    init_f <- format_init.gpd(init, y_fit$sig_mod)
+    sig <- get_param(init_f$sig , y_fit$sig_mod, y_fit$data)
+		gpd_negll(y_fit$y, predict(y_fit$rq_fitted), sig, init_f$xi) 
 	}
 	ans <- auglag(par=y_fit$par, fn=gpd_lik, heq=constrain(y_fit, pnt0, pnt1, R=R), control.outer=list(method="nlminb",trace=FALSE))
 	ans
@@ -38,7 +40,10 @@ optimize_profile.gpd_fit <- function(y_fit, pnt0, pnt1, R){
 
 optimize_profile.gev_fit <- function(y_fit, pnt0, pnt1, R){
 	gev_lik <- function(init){
-		gev_negll(y_fit$ydat$y, init[1], init[2], init[3], init[4], init[5], y_fit$ydat$mu_var, y_fit$ydat$sig_var)
+    init_f <- format_init.gev(init, y_fit$mu_mod, y_fit$sig_mod)
+    mu <- get_param(init_f$mu, y_fit$mu_mod, y_fit$data)
+    sig <- get_param(init_f$sig, y_fit$sig_mod, y_fit$data)
+		gev_negll(y_fit$y, mu, sig, init_f$xi) 
 	}
 	ans <- auglag(par=y_fit$par, fn=gev_lik, heq=constrain(y_fit, pnt0, pnt1, R=R), control.outer=list(method="nlminb",trace=FALSE))
 	ans
@@ -46,7 +51,10 @@ optimize_profile.gev_fit <- function(y_fit, pnt0, pnt1, R){
 
 optimize_profile.gauss_fit <- function(y_fit, pnt0, pnt1, R){
 	gauss_lik <- function(init){
-		gauss_negll(y_fit$ydat$y, init[1], init[2], init[3], init[4], y_fit$ydat$mu_var, y_fit$ydat$sig_var)
+    init_f <- format_init.gauss(init, y_fit$mu_mod, y_fit$sig2_mod)
+    mu <- get_param(init_f$mu, y_fit$mu_mod, y_fit$data)
+  sig2 <- get_param(init_f$sig2, y_fit$sig2_mod, y_fit$data)
+		gauss_negll(y_fit$y, mu, sig2) 
 	}
 	ans <- auglag(par=y_fit$par, fn=gauss_lik, heq=constrain(y_fit, pnt0, pnt1, R=R), control.outer=list(method="nlminb",trace=FALSE))
 	ans

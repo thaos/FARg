@@ -9,8 +9,8 @@ prof_ic=function(xp, t0, t1, y_fit, ci_p=0.95 ,to_plot=FALSE, ...){
   # 5) on vérifie que l'optimisation sous contrainte du bon far donne les même résultats que l'optimisation sans contraine
   # 6) construire le profil comme précédemment
   # 7) normalement on ne pourrait faire qu'une seule fonction pour construire le profile des 3 types d'ajusteùents
-  pnt0 <- set_pnt(t0, xp, y_fit$ydat)
-  pnt1 <- set_pnt(t1, xp, y_fit$ydat)
+  pnt0 <- set_pnt(t0, xp, y_fit$data)
+  pnt1 <- set_pnt(t1, xp, y_fit$data)
   init <- y_fit$par
   overall_max <- y_fit$objective
   far <- get_far(y_fit, pnt0, pnt1, ...)
