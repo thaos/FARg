@@ -14,8 +14,8 @@ get_param <- function(par, mod, data){
 complete_formula <- function(y, uncomplete_f){
   stopifnot(length(uncomplete_f) == 2)
   if(is.character(y)) 
-    return(as.formula(paste(y, "~", uncomplete_f[2])))
-  as.formula(paste(deparse(substitute(y)), "~", uncomplete_f[2]))
+    return((paste(y, "~", uncomplete_f[2])))
+  paste(deparse(substitute(y)), "~", uncomplete_f[2])
 }
 
 
@@ -88,7 +88,7 @@ format_init.gpd <- function(init,  sig_mod){
 
 #' @export
 gpd_fit <- function(y, data, mu_mod, sig_mod, qthreshold, init=NULL){
-	rq_fitted <- rq(complete_formula(y, mu_mod),data=data, tau=qthreshold)
+	rq_fitted <- rq(as.formula(complete_formula(y, mu_mod)),data=data, tau=qthreshold)
 	threshold <- predict(rq_fitted)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")

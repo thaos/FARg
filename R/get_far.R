@@ -14,35 +14,35 @@ get_p <- function(y_fit, ...){
 #' @export
 get_p.gauss_fit <- function(y_fit, pnt, ...){
   par <- compute_par.gauss_fit(y_fit, newdata=pnt)
-	res=pnorm(pnt$y, mean=par$mu, sd=sqrt(par$sig2), lower.tail=FALSE)
-	res=c(res, par$mu, par$sig)
+	res <- pnorm(pnt$y, mean=par$mu, sd=sqrt(par$sig2), lower.tail=FALSE)
+	res <- c(res, par$mu, par$sig)
 	names(res)=c("p","mu","sigma2")
 	res
 }
 
 #' @export
 get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
+  y_cord <- pnt$y
 	threshold <- predict(y_fit$rq_fitted, newdata=pnt)
 	stopifnot(under_threshold | y_cord >= threshold)
   # A remplacer !!!
-	mle <- y_fit$par
-	sig <- mle[1] + s_cord * mle[2]
-	sha <- mle[3]
+  par <- compute_par.gpd_fit(y_fit, newdata=pnt)
 	phi <- y_fit$rate
 	if (y_cord > threshold)
-		res <- pevd(y_cord, threshold=threshold, scale=sig, shape=sha, type="GP", lower.tail=FALSE) * phi
+		res <- pevd(y_cord, threshold=threshold, scale=par$sig, shape=par$xi, type="GP", lower.tail=FALSE) * phi
 	else {
-		findP <- function(par, m_cord, y_cord){
-			rq_fitted <- rq(y~mu_var, data=y_fit$ydat, tau=par)
-			ndata <- data.frame("mu_var"=m_cord)
-			predicted <- predict.rq(rq_fitted, newdata=ndata)
+		findP <- function(par, pnt, y_fit){
+      print(as.formula(complete_formula(y_fit$y, y_fit$mu_mod)))
+      rq_fitted <- rq(as.formula(complete_formula(y_fit$y, y_fit$mu_mod)), data=y_fit$data, tau=par)
+      #       rq_fitted <- rq(y_fit$y~avg_gbl_tas , data=y_fit$data, tau=par)
+			predicted <- predict.rq(rq_fitted, newdata=pnt)
 			abs(y_cord-predicted)
 		}
-		res <- optimize(findP, interval=c(0,1-phi), m_cord=m_cord, y_cord=y_cord, tol=0.001)
+		res <- optimize(findP, interval=c(0,1-phi), pnt=pnt, y_fit=y_fit, tol=0.001)
 		res <- res$minimum
 		res <- 1-res
 	}		
-	res <- c(res, threshold, sig, sha)
+	res <- c(res, threshold, par$sig, par$xi)
 	names(res) <- c("p","treshold","sigma","shape")
 	res
 }
