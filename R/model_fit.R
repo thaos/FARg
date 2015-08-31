@@ -12,6 +12,7 @@ get_param <- function(par, mod, data){
 }
 
 complete_formula <- function(y, uncomplete_f){
+  print(uncomplete_f)
   stopifnot(length(uncomplete_f) == 2)
   if(is.character(y)) 
     return((paste(y, "~", uncomplete_f[2])))
@@ -42,7 +43,7 @@ gev_negll <- function(y, mu, sig, xi){
 	levd(x=y, location=mu, scale=sig, shape=xi, type="GEV")
 }
 
-format_init.gauss <- function(init, mu_mod, sig_mod){
+format_init.gauss <- function(init, mu_mod, sig2_mod){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
   mu <- init[1:nb_mup]
   sig2 <- init[-(1:nb_mup)]
@@ -53,7 +54,7 @@ format_init.gauss <- function(init, mu_mod, sig_mod){
 gauss_fit <- function(y, data, mu_mod, sig2_mod, init=NULL){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
 	gauss_lik <- function(init){
-    init_f <- format_init.gauss(init, mu_mod, sig_mod)
+    init_f <- format_init.gauss(init, mu_mod, sig2_mod)
     mu <- get_param(init_f$mu, mu_mod, data)
   sig2 <- get_param(init_f$sig2, sig2_mod, data)
 		gauss_negll(y, mu, sig2) 
