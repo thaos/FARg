@@ -6,13 +6,14 @@
 #' @importFrom quantreg rq 
 #' @importFrom quantreg predict.rq 
 
+#' @export
 get_param <- function(par, mod, data){
   mat <- model.matrix(mod, data=data)
   param <- mat %*% par
 }
 
+#' @export
 complete_formula <- function(y, uncomplete_f){
-  print(uncomplete_f)
   stopifnot(length(uncomplete_f) == 2)
   if(is.character(y)) 
     return((paste(y, "~", uncomplete_f[2])))
@@ -43,7 +44,7 @@ gev_negll <- function(y, mu, sig, xi){
 	levd(x=y, location=mu, scale=sig, shape=xi, type="GEV")
 }
 
-format_init.gauss <- function(init, mu_mod, sig2_mod){
+format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
   mu <- init[1:nb_mup]
   sig2 <- init[-(1:nb_mup)]
@@ -51,10 +52,11 @@ format_init.gauss <- function(init, mu_mod, sig2_mod){
 }
 
 #' @export
-gauss_fit <- function(y, data, mu_mod, sig2_mod, init=NULL){
+gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
+  stopifnot(time_var %in% names(data))
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
 	gauss_lik <- function(init){
-    init_f <- format_init.gauss(init, mu_mod, sig2_mod)
+    init_f <- format_init.gauss_fit(init, mu_mod, sig2_mod)
     mu <- get_param(init_f$mu, mu_mod, data)
   sig2 <- get_param(init_f$sig2, sig2_mod, data)
 		gauss_negll(y, mu, sig2) 
@@ -76,11 +78,12 @@ gauss_fit <- function(y, data, mu_mod, sig2_mod, init=NULL){
 	y_fit$data <- data
 	y_fit$mu_mod <- mu_mod
 	y_fit$sig2_mod <- sig2_mod
+  y_fit$time_var <- time_var
 	attr(y_fit, "class")= "gauss_fit"
 	y_fit
 }
 
-format_init.gpd <- function(init,  sig_mod){
+format_init.gpd_fit <- function(init,  sig_mod){
   nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
   sig <- init[1:nb_sigp]
   xi <- init[-(1:nb_sigp)]
@@ -88,8 +91,18 @@ format_init.gpd <- function(init,  sig_mod){
 }
 
 #' @export
-gpd_fit <- function(y, data, mu_mod, sig_mod, qthreshold, init=NULL){
-	rq_fitted <- rq(as.formula(complete_formula(y, mu_mod)),data=data, tau=qthreshold)
+gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=NULL){
+  stopifnot(time_var %in% names(data))
+  # To handle the case when y variable is also present in the data data.frame
+  if("y" %in% names(data)){
+    if(any(y != data$y)){
+      new_name <- paste(sample(letters, 5), collapse="")
+      assign(new_name, y)
+      rq_fitted <- rq(as.formula(complete_formula(new_name, mu_mod)),data=cbind(y, data), tau=qthreshold)
+    }
+  } else {
+      rq_fitted <- rq(as.formula(complete_formula(y, mu_mod)),data=cbind(y, data), tau=qthreshold)
+  }
 	threshold <- predict(rq_fitted)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
@@ -99,7 +112,7 @@ gpd_fit <- function(y, data, mu_mod, sig_mod, qthreshold, init=NULL){
 		init <- init$par
 	}
 	gpd_lik <- function(init){
-    init_f <- format_init.gpd(init,  sig_mod)
+    init_f <- format_init.gpd_fit(init,  sig_mod)
     sig <- get_param(init_f$sig , sig_mod, data)
 		gpd_negll(y, threshold, sig, init_f$xi) 
 	}
@@ -111,8 +124,10 @@ gpd_fit <- function(y, data, mu_mod, sig_mod, qthreshold, init=NULL){
 	y_fit$data <- data 
 	y_fit$mu_mod <- mu_mod
 	y_fit$sig_mod <- sig_mod
+	y_fit$qthreshold <- qthreshold
 	y_fit$rq_fitted <- rq_fitted 
-	y_fit$rate <- mean(ydat$y>threshold)
+	y_fit$rate <- mean(y>threshold)
+  y_fit$time_var <- time_var
 	attr(y_fit, "class")= "gpd_fit"
 	y_fit
 }
@@ -127,7 +142,7 @@ gpd_fevd <- function(y, data, threshold, sig_mod=~1, init=NULL){
 	y_fit
 }
 
-format_init.gev <- function(init, mu_mod, sig_mod){
+format_init.gev_fit <- function(init, mu_mod, sig_mod){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
   nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
   mu <- init[1:nb_mup]
@@ -137,7 +152,8 @@ format_init.gev <- function(init, mu_mod, sig_mod){
 }
 
 #' @export
-gev_fit <- function(y, data, mu_mod, sig_mod, init=NULL){
+gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
+  stopifnot(time_var %in% names(data))
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
 		init <- gev_fevd(y, data, mu_mod=mu_mod, sig_mod=sig_mod)$results
@@ -146,7 +162,7 @@ gev_fit <- function(y, data, mu_mod, sig_mod, init=NULL){
 		init <- init$par
 	}
 	gev_lik <- function(init){
-    init_f <- format_init.gev(init, mu_mod, sig_mod)
+    init_f <- format_init.gev_fit(init, mu_mod, sig_mod)
     mu <- get_param(init_f$mu, mu_mod, data)
     sig <- get_param(init_f$sig, sig_mod, data)
 		gev_negll(y, mu, sig, init_f$xi) 
@@ -160,6 +176,7 @@ gev_fit <- function(y, data, mu_mod, sig_mod, init=NULL){
 	y_fit$data <- data 
 	y_fit$mu_mod <- mu_mod
 	y_fit$sig_mod <- sig_mod
+  y_fit$time_var <- time_var
 	y_fit
 }
 	
@@ -187,25 +204,29 @@ plot.gpd_fit <- function(x, ...){
   plot(res)
 }
 
+
+#' @export
 compute_par <- function(object, newdata, ...){
   UseMethod("compute_par")
 }
 
+#' @export
 compute_par.gpd_fit <- function(object, newdata, ...){
   threshold <- predict(object$rq_fitted, newdata)
-  init_f <- format_init.gpd(object$par,  object$sig_mod)
+  init_f <- format_init.gpd_fit(object$par,  object$sig_mod)
   data.frame("threshold"=threshold, "sig"=get_param(init_f$sig , object$sig_mod, newdata), "xi"=init_f$xi)
 }
 
+#' @export
 compute_par.gev_fit <- function(object, newdata, ...){
-  init_f <- format_init.gev(object$par, object$mu_mod, object$sig_mod)
+  init_f <- format_init.gev_fit(object$par, object$mu_mod, object$sig_mod)
   data.frame("mu"=get_param(init_f$mu, object$mu_mod, newdata), "sig"=get_param(init_f$sig, object$sig_mod, newdata), "xi"=init_f$xi)
 }
 
 
 #' @export
 compute_par.gauss_fit <- function(object, newdata, ...){
-  init_f <- format_init.gauss(object$par,  object$mu_mod, object$sig2_mod)
+  init_f <- format_init.gauss_fit(object$par,  object$mu_mod, object$sig2_mod)
   data.frame("mu"=get_param(init_f$mu, object$mu_mod, newdata), "sig2"=get_param(init_f$sig2, object$sig2_mod, newdata))
 }
 

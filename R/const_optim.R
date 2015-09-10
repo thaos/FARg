@@ -30,7 +30,7 @@ optimize_constr <- function(y_fit, pnt0, pnt1, R){
 
 optimize_profile.gpd_fit <- function(y_fit, pnt0, pnt1, R){
 	gpd_lik <- function(init){
-    init_f <- format_init.gpd(init, y_fit$sig_mod)
+    init_f <- format_init.gpd_fit(init, y_fit$sig_mod)
     sig <- get_param(init_f$sig , y_fit$sig_mod, y_fit$data)
 		gpd_negll(y_fit$y, predict(y_fit$rq_fitted), sig, init_f$xi) 
 	}

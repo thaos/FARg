@@ -32,9 +32,7 @@ get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
 		res <- pevd(y_cord, threshold=threshold, scale=par$sig, shape=par$xi, type="GP", lower.tail=FALSE) * phi
 	else {
 		findP <- function(par, pnt, y_fit){
-      print(as.formula((complete_formula(y_fit$y, y_fit$mu_mod))))
       rq_fitted <- rq(as.formula(complete_formula(y_fit$y, y_fit$mu_mod)), data=y_fit$data, tau=par)
-      #       rq_fitted <- rq(y_fit$y~avg_gbl_tas , data=y_fit$data, tau=par)
 			predicted <- predict.rq(rq_fitted, newdata=pnt)
 			abs(y_cord-predicted)
 		}
@@ -98,7 +96,7 @@ get_far.default <- function(y_fit, pnt0, pnt1, ...){
 }
 
 #' @export
-set_pnt <- function(year, y, ydat){
-	i <- min(which.min(abs(year -ydat$year)))
+set_pnt <- function(time, y, time_var="", ydat){
+	i <- min(which.min(abs(time - ydat[,time_var])))
 	cbind(y,ydat[i,])
 }
