@@ -94,15 +94,15 @@ format_init.gpd_fit <- function(init,  sig_mod){
 gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=NULL){
   stopifnot(time_var %in% names(data))
   # To handle the case when y variable is also present in the data data.frame
-  if("y" %in% names(data)){
-    if(any(y != data$y)){
-      new_name <- paste(sample(letters, 5), collapse="")
-      assign(new_name, y)
-      rq_fitted <- rq(as.formula(complete_formula(new_name, mu_mod)),data=cbind(y, data), tau=qthreshold)
-    }
-  } else {
-      rq_fitted <- rq(as.formula(complete_formula(y, mu_mod)),data=cbind(y, data), tau=qthreshold)
-  }
+  #   if("y" %in% names(data)){
+  #     if(any(y != data$y)){
+  #       new_name <- paste(sample(letters, 5), collapse="")
+  #       assign(new_name, y)
+  #       rq_fitted <- rq(as.formula(complete_formula(new_name, mu_mod)),data=cbind(y, data), tau=qthreshold)
+  #     }
+  #   } else {
+      rq_fitted <- rq(as.formula(complete_formula(substitute(y), mu_mod)),data=cbind(y, data), tau=qthreshold)
+  #   }
 	threshold <- predict(rq_fitted)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
