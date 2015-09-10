@@ -97,8 +97,7 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
     if(any(y != data$y)){
       new_name <- paste(sample(letters, 5), collapse="")
       assign(new_name, y)
-      #       rq_fitted <- rq(as.formula(complete_formula(new_name, mu_mod)),data=cbind(y, data), tau=qthreshold)
-      rq_fitted <- rq(as.formula(complete_formula(substitute(y), mu_mod)),data=data, tau=qthreshold)
+      rq_fitted <- rq(as.formula(complete_formula(new_name, mu_mod)),data=cbind(y, data), tau=qthreshold)
     }
   } else {
       rq_fitted <- rq(as.formula(complete_formula(y, mu_mod)),data=data, tau=qthreshold)
