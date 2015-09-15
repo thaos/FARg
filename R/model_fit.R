@@ -54,6 +54,9 @@ format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
 #' @export
 gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
   stopifnot(time_var %in% names(data))
+  y_name <- deparse(substitute(y))
+  if(is.element(y_name, names(data)))
+    y <- data[, y_name]
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
 	gauss_lik <- function(init){
     init_f <- format_init.gauss_fit(init, mu_mod, sig2_mod)
@@ -90,22 +93,18 @@ format_init.gpd_fit <- function(init,  sig_mod){
   list("sig"=sig, "xi"=xi)
 }
 
-#' @export
+#'@export
 gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=NULL){
   stopifnot(time_var %in% names(data))
-  if("y" %in% names(data)){
-    if(any(y != data$y)){
-      new_name <- paste(sample(letters, 5), collapse="")
-      assign(new_name, y)
-      rq_fitted <- rq(as.formula(complete_formula(new_name, mu_mod)),data=data, tau=qthreshold)
-    }
-  } else {
-      rq_fitted <- rq(as.formula(complete_formula(y, mu_mod)),data=data, tau=qthreshold)
-  }
+  y_name <- deparse(substitute(y))
+  if(is.element(y_name, names(data)))
+    y <- data[, y_name]
+  completed_formula <- complete_formula(y_name, mu_mod)
+  rq_fitted <- rq(as.formula(completed_formula),data=data, tau=qthreshold)
 	threshold <- predict(rq_fitted)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
-		init <- gpd_fevd(y, data, threshold, sig_mod=sig_mod)$results
+		init <- fevd(as.formula(paste(y_name,"~ 1")), data, threshold, scale.fun=sig_mod, type="GP", method="MLE")$results
 		print(paste("neg-likelihood =", init$value))
 		print(paste("mle =", do.call(paste, as.list(init$par))))
 		init <- init$par
@@ -131,16 +130,6 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
 	y_fit
 }
 	
-#' @export
-gpd_fevd <- function(y, data, threshold, sig_mod=~1, init=NULL){
-	if(is.null(init)){
-		y_fit <- fevd(y, data, threshold=threshold, scale.fun=sig_mod, type="GP", method="MLE")
-	} else{
-		y_fit <- fevd(y, data, threshold=threshold, scale.fun=sig_mod, type="GP", method="MLE", initial=init)
-	}
-	y_fit
-}
-
 format_init.gev_fit <- function(init, mu_mod, sig_mod){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
   nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
@@ -152,10 +141,13 @@ format_init.gev_fit <- function(init, mu_mod, sig_mod){
 
 #' @export
 gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
+  y_name <- deparse(substitute(y))
+  if(is.element(y_name, names(data)))
+    y <- data[, y_name]
   stopifnot(time_var %in% names(data))
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
-		init <- gev_fevd(y, data, mu_mod=mu_mod, sig_mod=sig_mod)$results
+		init  <- fevd(as.formula(paste(y_name, "~ 1")), data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE")$results
 		print(paste("neg-likelihood =", init$value))
 		print(paste("mle =", do.call(paste, as.list(init$par))))
 		init <- init$par
@@ -191,14 +183,14 @@ gev_fevd <- function(y, data, mu_mod=~1, sig_mod=~1, init=NULL){
 
 #' @export
 plot.gev_fit <- function(x, ...){
-  res <- fevd(x$y, x$data, location.fun=x$mu_mod, scale.fun=x$sig_mod, method="MLE")
+  res <- fevd(x$y, x$data, location.fun=x$mu_mod, scale.fun=x$sig_mod, method="MLE", initial=res$results$par)
   print(all.equal(x$par,res$results$par))
   plot(res)
 }
 
 #' @export
 plot.gpd_fit <- function(x, ...){
-  res <- fevd(x$y, x$data, threshold=predict(x$rq_fitted), scale.fun=x$sig_mod, type="GP", method="MLE")
+  res <- fevd(x$y, x$data, threshold=predict(x$rq_fitted), scale.fun=x$sig_mod, type="GP", method="MLE", initial=res$results$par)
   print(all.equal(x$par,res$results$par))
   plot(res)
 }

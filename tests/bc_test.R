@@ -27,6 +27,21 @@ t1 <- 2003
 pnt1 <- set_pnt(t1, xp, time_var="year", ydat)
 pnt0 <- set_pnt(t0, xp, time_var="year", ydat)
 
+get_far_theo <- function(pnt0, pnt1){
+  get_p_theo <- function(pnt){
+    i <- min(which.min(abs(ydat$year -  pnt$year)))
+    print(ydat[i,])
+    p <- pnorm(as.numeric(pnt[1]), mean=mu[i], sd=sqrt(sigma2[i]), lower.tail=FALSE)
+  }
+  p0 <- get_p_theo(pnt0)
+  p1 <- get_p_theo(pnt1)
+  if( p0 == 0 & p1 == 0)
+    return(1)
+  else
+    return(1 - p0/p1)
+}
+get_far_theo(pnt0, pnt1)
+
 y_bc <- bc_fit(l_lambda=seq(-10,10,0.1), y, data=ydat, mu_mod=~covariate, sig2_mod=~covariate, time_var="year", to_plot=TRUE)
 lambda <- y_bc$lambda
 y_std <- y_bc$y_std
@@ -36,6 +51,8 @@ threshold <-  select_thresh(tc)
 rate=mean(y_std >= threshold)
 y_bc_fit <- gpd_fit(y_bc$y_std,  ydat, time_var="year", qthreshold=1-rate)
 y_bc_fit <- gpd_fit(y_bc$y_std,  ydat, mu_mod=~y, time_var="year", qthreshold=1-rate)
+ydat$y_std  <- y
+y_bc_fit <- gpd_fit(y_std,  ydat, mu_mod=~y_std, time_var="year", qthreshold=1-rate)
 pnt1_bc <- transform_pnt(y_bc, pnt1)
 pnt0_bc <- transform_pnt(y_bc, pnt0)
 get_far(y_bc_fit, pnt0_bc, pnt1_bc)

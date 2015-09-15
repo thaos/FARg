@@ -13,7 +13,7 @@ get_p <- function(y_fit, ...){
 
 #' @export
 get_p.gauss_fit <- function(y_fit, pnt, ...){
-  par <- compute_par.gauss_fit(y_fit, newdata=pnt)
+  par <- compute_par.gauss_fit(y_fit, newdata=pnt[, -1])
 	res <- pnorm(pnt$y, mean=par$mu, sd=sqrt(par$sig2), lower.tail=FALSE)
 	res <- c(res, par$mu, par$sig)
 	names(res)=c("p","mu","sigma2")
@@ -23,17 +23,17 @@ get_p.gauss_fit <- function(y_fit, pnt, ...){
 #' @export
 get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
   y_cord <- pnt$y
-	threshold <- predict(y_fit$rq_fitted, newdata=pnt)
+	threshold <- predict(y_fit$rq_fitted, newdata=pnt[, -1])
 	stopifnot(under_threshold | y_cord >= threshold)
   # A remplacer !!!
-  par <- compute_par.gpd_fit(y_fit, newdata=pnt)
+  par <- compute_par.gpd_fit(y_fit, newdata=pnt[, -1])
 	phi <- y_fit$rate
 	if (y_cord > threshold)
 		res <- pevd(y_cord, threshold=threshold, scale=par$sig, shape=par$xi, type="GP", lower.tail=FALSE) * phi
 	else {
 		findP <- function(par, pnt, y_fit){
       rq_fitted <- rq(as.formula(complete_formula(y_fit$y, y_fit$mu_mod)), data=y_fit$data, tau=par)
-			predicted <- predict.rq(rq_fitted, newdata=pnt)
+    predicted <- predict.rq(rq_fitted, newdata=pnt[, -1])
 			abs(y_cord-predicted)
 		}
 		res <- optimize(findP, interval=c(0,1-phi), pnt=pnt, y_fit=y_fit, tol=0.001)
@@ -47,7 +47,7 @@ get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
 
 #' @export
 get_p.gev_fit <- function(y_fit, pnt, ...){
-  par <- compute_par.gev_fit(y_fit, newdata=pnt)
+  par <- compute_par.gev_fit(y_fit, newdata=pnt[, -1])
 	res <- pevd(pnt$y, loc=par$mu, scale=par$sig, shape=par$xi ,lower.tail=FALSE)
 	res <- c(res, par$mu, par$sig, par$xi)
 	names(res) <- c("p","mu","sigma","shape")

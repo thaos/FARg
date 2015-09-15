@@ -65,7 +65,8 @@ transform_newdat.bc_fit <- function(y_trans, y, newdata, ...){
 }
 
 transform_pnt.bc_fit <- function(y_trans, pnt){
-  pnt$y <- as.numeric(transform_newdat.bc_fit(y_trans, y=pnt$y, newdata=pnt)$y_std)
+  # if several y in pnt data.frame, it takes the first one
+  pnt$y <- as.numeric(transform_newdat.bc_fit(y_trans, y=pnt$y, newdata=pnt[, -1])$y_std)
   pnt
 }
 

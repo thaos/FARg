@@ -38,7 +38,7 @@ transform_pnt <- function(y_trans, ...){
 }
 
 transform_pnt.std <- function(y_trans, pnt, ...){
-  pnt$y <- as.numeric(transform_newdat.std(y_trans, y=pnt$y, newdata=pnt))
+  pnt$y <- as.numeric(transform_newdat.std(y_trans, y=pnt$y, newdata=pnt[, -1]))
   pnt
 }
 
