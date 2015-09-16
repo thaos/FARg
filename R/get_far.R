@@ -96,7 +96,11 @@ get_far.default <- function(y_fit, pnt0, pnt1, ...){
 }
 
 #' @export
-set_pnt <- function(time, y, time_var="", ydat){
-	i <- min(which.min(abs(time - ydat[,time_var])))
+set_pnt <- function(time, y, time_var="", data=NULL){
+  if(!is.character(time_var))
+    time_var <- paste(deparse(substitute(time_var)), collapse=" ")
+  time_formula <- paste(time_var, "~ 1", sep="")
+  time_var <- as.numeric(model.frame(as.formula(time_formula), data=data)[[1]])
+  i <- min(which.min(abs(time - time_var)))
 	cbind(y,ydat[i,])
 }
