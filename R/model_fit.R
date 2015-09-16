@@ -8,7 +8,10 @@
 
 #' @export
 exist_time_var <- function(time_var, data){
-  (!inherits(time_var, "simpleError") || exists(paste(deparse(substitute(time_var)), collapse=" ")) || exists(time_var) || time_var %in% names(data))
+  if(is.character(time_var))
+    return(exists(time_var) || is.element(time_var, names(data)))
+  else
+    return(exists(paste(deparse(substitute(time_var)), collapse=" ")) || !inherits(time_var, "simpleError"))
 }
 
 #' @export
@@ -58,7 +61,8 @@ format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
 
 #' @export
 gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
-  stopifnot(exist_time_var(time, data))
+  stopifnot(exist_time_var(time_var, data))
+  stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
@@ -100,7 +104,8 @@ format_init.gpd_fit <- function(init,  sig_mod){
 
 #'@export
 gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=NULL){
-  stopifnot(exist_time_var(time, data))
+  stopifnot(exist_time_var(time_var, data))
+  stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
@@ -146,7 +151,8 @@ format_init.gev_fit <- function(init, mu_mod, sig_mod){
 
 #' @export
 gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
-  stopifnot(exist_time_var(time, data))
+  stopifnot(exist_time_var(time_var, data))
+  stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse=" ")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
