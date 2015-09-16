@@ -53,7 +53,7 @@ format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
 
 #' @export
 gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
-  stopifnot(time_var %in% names(data))
+  stopifnot(!inherits(time_var, "simpleError") || exists(paste(deparse(substitute(time_var)), collapse=" ")) || exists(time_var) || time_var %in% names(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
@@ -95,7 +95,7 @@ format_init.gpd_fit <- function(init,  sig_mod){
 
 #'@export
 gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=NULL){
-  stopifnot(time_var %in% names(data))
+  stopifnot(!inherits(time_var, "simpleError") || exists(paste(deparse(substitute(time_var)), collapse=" ")) || exists(time_var) || time_var %in% names(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
@@ -141,10 +141,10 @@ format_init.gev_fit <- function(init, mu_mod, sig_mod){
 
 #' @export
 gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
+  stopifnot(!inherits(time_var, "simpleError") || exists(paste(deparse(substitute(time_var)), collapse=" ")) || exists(time_var) || time_var %in% names(data))
   y_name <- paste(deparse(substitute(y)), collapse=" ")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
-  stopifnot(time_var %in% names(data))
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
 		init  <- fevd(as.formula(paste(y_name, "~ 1")), data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE")$results
