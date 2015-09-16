@@ -7,6 +7,11 @@
 #' @importFrom quantreg predict.rq 
 
 #' @export
+exist_time_var <- function(time_var, data){
+  (!inherits(time_var, "simpleError") || exists(paste(deparse(substitute(time_var)), collapse=" ")) || exists(time_var) || time_var %in% names(data))
+}
+
+#' @export
 get_param <- function(par, mod, data){
   mat <- model.matrix(mod, data=data)
   param <- mat %*% par
@@ -53,7 +58,7 @@ format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
 
 #' @export
 gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
-  stopifnot(!inherits(time_var, "simpleError") || exists(paste(deparse(substitute(time_var)), collapse=" ")) || exists(time_var) || time_var %in% names(data))
+  stopifnot(exist_time_var(time, data))
   y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
@@ -95,7 +100,7 @@ format_init.gpd_fit <- function(init,  sig_mod){
 
 #'@export
 gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=NULL){
-  stopifnot(!inherits(time_var, "simpleError") || exists(paste(deparse(substitute(time_var)), collapse=" ")) || exists(time_var) || time_var %in% names(data))
+  stopifnot(exist_time_var(time, data))
   y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
@@ -141,7 +146,7 @@ format_init.gev_fit <- function(init, mu_mod, sig_mod){
 
 #' @export
 gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
-  stopifnot(!inherits(time_var, "simpleError") || exists(paste(deparse(substitute(time_var)), collapse=" ")) || exists(time_var) || time_var %in% names(data))
+  stopifnot(exist_time_var(time, data))
   y_name <- paste(deparse(substitute(y)), collapse=" ")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
