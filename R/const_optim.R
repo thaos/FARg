@@ -40,7 +40,7 @@ optimize_profile.gpd_fit <- function(y_fit, pnt0, pnt1, R){
 
 optimize_profile.gev_fit <- function(y_fit, pnt0, pnt1, R){
 	gev_lik <- function(init){
-    init_f <- format_init.gev(init, y_fit$mu_mod, y_fit$sig_mod)
+    init_f <- format_init.gev_fit(init, y_fit$mu_mod, y_fit$sig_mod)
     mu <- get_param(init_f$mu, y_fit$mu_mod, y_fit$data)
     sig <- get_param(init_f$sig, y_fit$sig_mod, y_fit$data)
 		gev_negll(y_fit$y, mu, sig, init_f$xi) 
@@ -51,7 +51,7 @@ optimize_profile.gev_fit <- function(y_fit, pnt0, pnt1, R){
 
 optimize_profile.gauss_fit <- function(y_fit, pnt0, pnt1, R){
 	gauss_lik <- function(init){
-    init_f <- format_init.gauss(init, y_fit$mu_mod, y_fit$sig2_mod)
+    init_f <- format_init.gauss_fit(init, y_fit$mu_mod, y_fit$sig2_mod)
     mu <- get_param(init_f$mu, y_fit$mu_mod, y_fit$data)
   sig2 <- get_param(init_f$sig2, y_fit$sig2_mod, y_fit$data)
 		gauss_negll(y_fit$y, mu, sig2) 
