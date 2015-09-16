@@ -54,7 +54,7 @@ format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
 #' @export
 gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
   stopifnot(time_var %in% names(data))
-  y_name <- deparse(substitute(y))
+  y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
@@ -96,7 +96,7 @@ format_init.gpd_fit <- function(init,  sig_mod){
 #'@export
 gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=NULL){
   stopifnot(time_var %in% names(data))
-  y_name <- deparse(substitute(y))
+  y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
   completed_formula <- complete_formula(y_name, mu_mod)
