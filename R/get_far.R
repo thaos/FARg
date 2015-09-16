@@ -68,7 +68,7 @@ get_p.gev_fit <- function(y_fit, pnt, ...){
 get_far.gpd_fit <- function(y_fit, pnt0, pnt1, under_threshold=FALSE, ...){
 	p0 <- get_p.gpd_fit(y_fit, pnt0, under_threshold=under_threshold)
 	p1 <- get_p.gpd_fit(y_fit, pnt1, under_threshold=under_threshold)
-	ifelse(p0[1] == 0 & p1[1] == 0, FAR <- 1, FAR <- 1-(p0[1]/p1[1]))
+	ifelse(p0[1] == 0 & p1[1] == 0, FAR <- 0, FAR <- 1-(p0[1]/p1[1]))
 	res <- c(FAR,p0,p1)
 	names(res) <- c("FAR", "p0", "thresh0", "sc0", "sh0", "p1","thresh1", "sc1", "sh1")
 	res
@@ -89,7 +89,7 @@ get_far.default <- function(y_fit, pnt0, pnt1, ...){
 	p1 <- get_p(y_fit, pnt1, ...)
 	name0 <- paste(names(p0),"0",sep="")
 	name1 <- paste(names(p1),"1",sep="")
-	ifelse(p0[1] == 0 & p1[1] == 0, FAR <- 1, FAR <- 1-(p0[1]/p1[1]))
+	ifelse(p0[1] == 0 & p1[1] == 0, FAR <- 0, FAR <- 1-(p0[1]/p1[1]))
 	res <- c(FAR,p0,p1)
 	names(res) <- c("FAR", name0, name1)
 	res
@@ -97,10 +97,13 @@ get_far.default <- function(y_fit, pnt0, pnt1, ...){
 
 #' @export
 set_pnt <- function(time, y, time_var="", data=NULL){
-  if(!is.character(time_var))
-    time_var <- paste(deparse(substitute(time_var)), collapse=" ")
-  time_formula <- paste(time_var, "~ 1", sep="")
-  time_var <- as.numeric(model.frame(as.formula(time_formula), data=data)[[1]])
+  try({
+      time_name <- time_var
+      if(!is.character(time_name))
+        time_name <- paste(deparse(substitute(time_name)), collapse=" ")
+      time_formula <- paste(time_name, "~ 1", sep="")
+      time_var <- as.numeric(model.frame(as.formula(time_formula), data=data)[[1]])
+  })
   i <- min(which.min(abs(time - time_var)))
-	cbind(y,ydat[i,])
+	cbind(y,data[i,])
 }

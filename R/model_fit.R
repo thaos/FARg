@@ -7,6 +7,14 @@
 #' @importFrom quantreg predict.rq 
 
 #' @export
+random_name <- function(n=5, data){
+  ans <- paste(sample(letters, n), collapse="")
+  while(is.element(ans, names(data))) 
+    ans <- paste(sample(letters, n), collapse="")
+  ans
+}
+
+#' @export
 exist_time_var <- function(time_var, data){
   if(is.character(time_var))
     return(exists(time_var) || is.element(time_var, names(data)))
@@ -52,6 +60,7 @@ gev_negll <- function(y, mu, sig, xi){
 	levd(x=y, location=mu, scale=sig, shape=xi, type="GEV")
 }
 
+#'@export
 format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
   mu <- init[1:nb_mup]
@@ -66,6 +75,11 @@ gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
   y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
+  y_name <- "y"
+  if(is.element("y", names(data))){
+    y_name <- random_name(data=data)
+    assign(y_name, y)
+  }
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
 	gauss_lik <- function(init){
     init_f <- format_init.gauss_fit(init, mu_mod, sig2_mod)
@@ -95,6 +109,7 @@ gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
 	y_fit
 }
 
+#'@export
 format_init.gpd_fit <- function(init,  sig_mod){
   nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
   sig <- init[1:nb_sigp]
@@ -109,6 +124,11 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
   y_name <- paste(deparse(substitute(y)), collapse="")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
+  y_name <- "y"
+  if(is.element("y", names(data))){
+    y_name <- random_name(data=data)
+    assign(y_name, y)
+  }
   completed_formula <- complete_formula(y_name, mu_mod)
   rq_fitted <- rq(as.formula(completed_formula),data=data, tau=qthreshold)
 	threshold <- predict(rq_fitted)
@@ -140,6 +160,8 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
 	y_fit
 }
 	
+
+#'@export
 format_init.gev_fit <- function(init, mu_mod, sig_mod){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
   nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
@@ -156,6 +178,11 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
   y_name <- paste(deparse(substitute(y)), collapse=" ")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
+  y_name <- "y"
+  if(is.element("y", names(data))){
+    y_name <- random_name(data=data)
+    assign(y_name, y)
+  }
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
 		init  <- fevd(as.formula(paste(y_name, "~ 1")), data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE")$results
@@ -183,25 +210,15 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 }
 	
 #' @export
-gev_fevd <- function(y, data, mu_mod=~1, sig_mod=~1, init=NULL){
-	if(is.null(init)){
-		y_fit=fevd(y, data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE")
-	} else{
-		y_fit=fevd(y, data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE", initial=init)
-	}
-	y_fit
-}
-
-#' @export
 plot.gev_fit <- function(x, ...){
-  res <- fevd(x$y, x$data, location.fun=x$mu_mod, scale.fun=x$sig_mod, method="MLE", initial=res$results$par)
+  res <- fevd(x$y, x$data, location.fun=x$mu_mod, scale.fun=x$sig_mod, method="MLE", initial=x$results$par)
   print(all.equal(x$par,res$results$par))
   plot(res)
 }
 
 #' @export
 plot.gpd_fit <- function(x, ...){
-  res <- fevd(x$y, x$data, threshold=predict(x$rq_fitted), scale.fun=x$sig_mod, type="GP", method="MLE", initial=res$results$par)
+  res <- fevd(x$y, x$data, threshold=predict(x$rq_fitted), scale.fun=x$sig_mod, type="GP", method="MLE", initial=x$results$par)
   print(all.equal(x$par,res$results$par))
   plot(res)
 }

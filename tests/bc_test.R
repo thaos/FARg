@@ -24,8 +24,16 @@ ydat <- data.frame(y, year, covariate)
 xp <- 102 
 t0 <- 1870
 t1 <- 2003
+pnt1 <- set_pnt(t1, xp, time_var=1:nrow(ydat), ydat)
+pnt0 <- set_pnt(t0, xp, time_var=1:nrow(ydat), ydat)
+pnt1 <- set_pnt(t1, xp, time_var=1:nrow(ydat), NULL)
+pnt0 <- set_pnt(t0, xp, time_var=1:nrow(ydat), NULL)
 pnt1 <- set_pnt(t1, xp, time_var="year", ydat)
 pnt0 <- set_pnt(t0, xp, time_var="year", ydat)
+pnt1 <- set_pnt(t1, xp, time_var=year, NULL)
+pnt0 <- set_pnt(t0, xp, time_var=year, NULL)
+pnt1 <- set_pnt(t1, xp, time_var=year, ydat)
+pnt0 <- set_pnt(t0, xp, time_var=year, ydat)
 
 get_far_theo <- function(pnt0, pnt1){
   get_p_theo <- function(pnt){
@@ -49,10 +57,9 @@ tc <- tcplot(y_std,c(quantile(y_std,0.5),max(y_std)))
 # Easton avec thy_bchold fixe 
 threshold <-  select_thresh(tc) 
 rate=mean(y_std >= threshold)
-y_bc_fit <- gpd_fit(y_bc$y_std,  ydat, time_var="year", qthreshold=1-rate)
 y_bc_fit <- gpd_fit(y_bc$y_std,  ydat, mu_mod=~y, time_var="year", qthreshold=1-rate)
-ydat$y_std  <- y
-y_bc_fit <- gpd_fit(y_std,  ydat, mu_mod=~y_std, time_var="year", qthreshold=1-rate)
+y_bc_fit <- gpd_fit(y_bc$y_std,  ydat, time_var="year", qthreshold=1-rate)
+y_bc_fit <- gpd_fit(y_bc$y_std,  ydat, time_var=year, qthreshold=1-rate)
 pnt1_bc <- transform_pnt(y_bc, pnt1)
 pnt0_bc <- transform_pnt(y_bc, pnt0)
 get_far(y_bc_fit, pnt0_bc, pnt1_bc)
@@ -108,12 +115,16 @@ colnames(bres_bc$t) <- names(far_bc)
 ic_bc <- apply(bres_bc$t, 2, quantile, probs=c(0.05, 0.5, 0.95)) 
 
 
+y_std <- standardize(y, data=NULL, mu_mod=~covariate, sig2_mod=~covariate, to_plot=TRUE)
 y_std <- standardize(y, data=ydat, mu_mod=~covariate, sig2_mod=~covariate, to_plot=TRUE)
 tc=tcplot(y_std$y_std, c(quantile(y_std$y_std, 0.5), max(y_std$y_std)))
 threshold <-  select_thresh(tc) 
 rate=mean(y_std$y_std >= threshold)
 pnt1_std <- transform_pnt(y_std, pnt1)
 pnt0_std <- transform_pnt(y_std, pnt0)
+y_std_fit <- gpd_fit(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22:nrow(ydat)) ,  ydat, time_var="year", qthreshold=1-rate)
+y_std_fit <- gpd_fit(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22:nrow(ydat)) ,  data = NULL, time_var="year", qthreshold=1-rate)
+y_std_fit <- gpd_fit(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22:nrow(ydat)) ,  data = ydat[,"covariate", drop=FALSE], time_var="year", qthreshold=1-rate)
 y_std_fit <- gpd_fit(y_std$y_std ,  ydat, time_var="year", qthreshold=1-rate)
 get_far(y_std_fit, pnt0_std, pnt1_std)
 

@@ -37,7 +37,7 @@ boot_func.gpd_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
   init <- NULL
   if(use_init) init <- y_fit$par
   bdat <- y_fit$data[indices,]
-  b_fit <- gpd_fit(y_fit$y[indices], bdat, y_fit$mu_mod, y_fit$sig_mod, time_var, qthreshold, init)
+  b_fit <- gpd_fit(y_fit$y[indices], bdat, y_fit$mu_mod, y_fit$sig_mod, y_fit$time_var, qthreshold, init)
   get_far(b_fit, pnt0, pnt1, under_threshold=TRUE)
 }
 
@@ -46,7 +46,7 @@ boot_func.gev_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
   init <- NULL
   if(use_init) init <- y_fit$par
   bdat <- y_fit$data[indices,]
-  b_fit <- gev_fit(y_fit$y[indices], bdat, y_fit$mu_mod, y_fit$sig_mod, time_var, init)
+  b_fit <- gev_fit(y_fit$y[indices], bdat, y_fit$mu_mod, y_fit$sig_mod, y_fit$time_var, init)
   get_far(b_fit, pnt0, pnt1)
 }
 
