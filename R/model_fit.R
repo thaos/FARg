@@ -141,7 +141,7 @@ format_init.gev_fit <- function(init, mu_mod, sig_mod){
 
 #' @export
 gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
-  y_name <- deparse(substitute(y))
+  y_name <- paste(deparse(substitute(y)), collapse=" ")
   if(is.element(y_name, names(data)))
     y <- data[, y_name]
   stopifnot(time_var %in% names(data))
