@@ -6,7 +6,6 @@
 #' @importFrom quantreg rq 
 #' @importFrom quantreg predict.rq 
 
-#' @export
 random_name <- function(n=5, data){
   ans <- paste(sample(letters, n), collapse="")
   while(is.element(ans, names(data))) 
@@ -14,7 +13,6 @@ random_name <- function(n=5, data){
   ans
 }
 
-#' @export
 exist_time_var <- function(time_var, data){
   if(is.character(time_var))
     return(exists(time_var) || is.element(time_var, names(data)))
@@ -28,7 +26,6 @@ get_param <- function(par, mod, data){
   param <- mat %*% par
 }
 
-#' @export
 complete_formula <- function(y, uncomplete_f){
   stopifnot(length(uncomplete_f) == 2)
   if(is.character(y)) 
@@ -37,7 +34,6 @@ complete_formula <- function(y, uncomplete_f){
 }
 
 
-#' @export
 gauss_negll <- function(y, mu, sig2){
   n <- length(y)
   stopifnot(length(mu) == n & length(sig2) == n)
@@ -46,21 +42,18 @@ gauss_negll <- function(y, mu, sig2){
 	negll
 }
 
-#' @export
 gpd_negll <- function(y, threshold, sig, xi) {
   n <- length(y)
   stopifnot(length(threshold) == n & length(sig) == n)
 	levd(x=y, threshold=threshold, scale=sig, shape=xi, type="GP",npy=1)
 }
 
-#' @export
 gev_negll <- function(y, mu, sig, xi){
   n <- length(y)
   stopifnot(length(mu) == n & length(sig) == n)
 	levd(x=y, location=mu, scale=sig, shape=xi, type="GEV")
 }
 
-#'@export
 format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
   mu <- init[1:nb_mup]
@@ -109,7 +102,6 @@ gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
 	y_fit
 }
 
-#'@export
 format_init.gpd_fit <- function(init,  sig_mod){
   nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
   sig <- init[1:nb_sigp]
@@ -161,7 +153,6 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
 }
 	
 
-#'@export
 format_init.gev_fit <- function(init, mu_mod, sig_mod){
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
   nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")

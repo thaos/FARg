@@ -25,12 +25,10 @@ boot_ic <- function(xp,t0, t1, y_fit, ci_p=0.95, use_init=TRUE, ...){
   ans
 }
 
-#' @export
 boot_func <- function(y_fit, ...){
   UseMethod("boot_func")
 }
 
-#' @export
 boot_func.gpd_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
   qthreshold <- y_fit$rq_fitted$tau
   stopifnot(length(qthreshold) == 1)
@@ -41,7 +39,6 @@ boot_func.gpd_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
   get_far(b_fit, pnt0, pnt1, under_threshold=TRUE)
 }
 
-#' @export
 boot_func.gev_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
   init <- NULL
   if(use_init) init <- y_fit$par
@@ -50,7 +47,6 @@ boot_func.gev_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
   get_far(b_fit, pnt0, pnt1)
 }
 
-#' @export
 boot_func.gauss_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
   init <- NULL
   if(use_init) init <- y_fit$par

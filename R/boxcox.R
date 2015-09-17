@@ -1,6 +1,7 @@
 #' @importFrom evmix fgpd 
 #' @importFrom MASS  boxcox
 
+#' @export
 bc <- function(x,lambda){
   y=NA
   if(lambda!=0){y=(x^lambda-1)/lambda}
@@ -15,6 +16,7 @@ lambda_prof <- function(lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, init=
 	y_fit
 }
 
+#' @export
 bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, to_plot=FALSE){
   stopifnot(all(y > 0))
   #for the stability of the boxcox trannsformation
@@ -56,6 +58,7 @@ bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, t
   res
 }
 
+#' @export
 transform_newdat.bc_fit <- function(y_trans, y, newdata, ...){
   y <- y / exp(mean(log(y_trans$y)))
   y_lambda <- bc(y, y_trans$lambda)
@@ -64,6 +67,7 @@ transform_newdat.bc_fit <- function(y_trans, y, newdata, ...){
   data.frame(y, y_lambda, y_std)
 }
 
+#' @export
 transform_pnt.bc_fit <- function(y_trans, pnt){
   # if several y in pnt data.frame, it takes the first one
   pnt$y <- as.numeric(transform_newdat.bc_fit(y_trans, y=pnt$y, newdata=pnt[, -1])$y_std)
