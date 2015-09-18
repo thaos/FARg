@@ -38,8 +38,8 @@ get_p(ge_fit, pnt1)
 get_far(ge_fit, pnt0, pnt1)
 
 p_gpd <- prof_ic(gp_fit, xp, t0, t1, ci_p=0.95 ,to_plot=TRUE)
-p_gev <- prof_ic(ge_fit, xp, t0, t1, ge_fit, ci_p=0.95 ,to_plot=TRUE)
-p_gauss <- prof_ic(ga_fit, t0, t1, ga_fit, ci_p=0.95 ,to_plot=TRUE)
+p_gev <- prof_ic(ge_fit, xp, t0, t1, ci_p=0.95 ,to_plot=TRUE)
+p_gauss <- prof_ic(ga_fit, xp, t0, t1, ci_p=0.95 ,to_plot=TRUE)
 
 b_gpd <- boot_ic(gp_fit, xp, t0, t1, ci_p=0.95, under_threshold=TRUE)
 b_gev <- boot_ic(ge_fit, xp, t0, t1, ci_p=0.95)
