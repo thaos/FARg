@@ -13,7 +13,8 @@ standardize <- function(y, data, mu_mod=~1, sig2_mod=~1,to_plot=FALSE){
               "sig2_mod"=sig2_mod,
               "mu_fit"=y_fit,
               "sig2_fit"=r2_fit)
-  class(res) <- "std"
+  class(res) <- "trans"
+  class(res) <- append(class(res), "std")
   res
 }
 

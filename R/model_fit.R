@@ -20,7 +20,6 @@ exist_time_var <- function(time_var, data){
     return(exists(paste(deparse(substitute(time_var)), collapse=" ")) || !inherits(time_var, "simpleError"))
 }
 
-#' @export
 get_param <- function(par, mod, data){
   mat <- model.matrix(mod, data=data)
   param <- mat %*% par
@@ -61,8 +60,28 @@ format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
   list("mu"=mu, "sig2"=sig2)
 }
 
+#' Fit a time serie of independent gaussians.
+#' 
+#' \code{gauss_fit} fits a time serie of independant gaussians where the mean and the variance depend linearly on a set of covariates.
+#'
+#' MLE fit of a time serie y of independant gaussians where the mean and the variance depend linearly on a set of covariates. The optimization of the negative log-likelihood is done with nlminb function in R. 
+#' @param y the time serie to be fitted.
+#' @param data a data.frame object with  where the function looks first for the variables y, time_var and the covariates specified in the mu_mod and sig2_mod arguments.
+#' @param mu_mod a formula defining the covariates the mean parameter of the gaussian depends linearly on.
+#' @param sig2_mod a formula defining the covariates the variance parameter of the gaussian depends linearly on.
+#' @param time_var a variable used to define the time in the time serie. It can also be a string giving the variable name.
+#' @param init vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using one iteration of feasible GLS.
+#' @return returns an object of class gpd_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood and the arguments use to call gauss_fit 
+#' @examples
+#'data(tas)
+#' #Example with the same covariate for the mean and variance parameter
+#'ga_fit <- gauss_fit(tas$eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+#' # get the values of the mean and variance parameters of the gaussian at each time
+#'compute_par(ga_fit, tas)
+#' # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
+#'plot(ga_fit)
 #' @export
-gauss_fit <- function(y, data, mu_mod, sig2_mod, time_var, init=NULL){
+gauss_fit <- function(y, data, mu_mod=~1, sig2_mod=~1, time_var, init=NULL){
   stopifnot(exist_time_var(time_var, data))
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")

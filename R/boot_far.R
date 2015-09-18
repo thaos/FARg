@@ -9,13 +9,18 @@ simple_boot <- function(y_fit, statistic, R=250, seed=1, ...){
 }
 
 #' @export
-boot_ic <- function(xp,t0, t1, y_fit, ci_p=0.95, use_init=TRUE, ...){
-  pnt0 <- set_pnt(t0, xp, time_var=y_fit$time_var, y_fit$data)
-  pnt1 <- set_pnt(t1, xp, time_var=y_fit$time_var, y_fit$data)
-  far_mle <- get_far(y_fit, pnt0, pnt1, ...)
+boot_ic <- function(object, ...){
+  UseMethod("boot_ic")
+}
+
+#' @export
+boot_ic.default <- function(object, xp,t0, t1, ci_p=0.95, use_init=TRUE, ...){
+  pnt0 <- set_pnt(t0, xp, time_var=object$time_var, object$data)
+  pnt1 <- set_pnt(t1, xp, time_var=object$time_var, object$data)
+  far_mle <- get_far(object, pnt0, pnt1, ...)
   #   log <- capture.output({
-    #     boot_res=boot(data=y_fit, statistic=boot_func, R=250,  pnt0=pnt0, pnt1=pnt1, use_init=use_init, parallel="snow")
-    boot_res=simple_boot(y_fit, statistic=boot_func, R=250,  y_fit=y_fit, pnt0=pnt0, pnt1=pnt1, use_init=use_init)
+    #     boot_res=boot(data=object, statistic=boot_func, R=250,  pnt0=pnt0, pnt1=pnt1, use_init=use_init, parallel="snow")
+    boot_res=simple_boot(object, statistic=boot_func, R=250, pnt0=pnt0, pnt1=pnt1, use_init=use_init)
   #   })
   alpha <- 1-ci_p
   far_boot <- boot_res[1,]
@@ -25,33 +30,33 @@ boot_ic <- function(xp,t0, t1, y_fit, ci_p=0.95, use_init=TRUE, ...){
   ans
 }
 
-boot_func <- function(y_fit, ...){
+boot_func <- function(object, ...){
   UseMethod("boot_func")
 }
 
-boot_func.gpd_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
-  qthreshold <- y_fit$rq_fitted$tau
+boot_func.gpd_fit <- function(object, indices, pnt0, pnt1, use_init=TRUE, ...){
+  qthreshold <- object$rq_fitted$tau
   stopifnot(length(qthreshold) == 1)
   init <- NULL
-  if(use_init) init <- y_fit$par
-  bdat <- y_fit$data[indices,]
-  b_fit <- gpd_fit(y_fit$y[indices], bdat, y_fit$mu_mod, y_fit$sig_mod, y_fit$time_var, qthreshold, init)
+  if(use_init) init <- object$par
+  bdat <- object$data[indices,]
+  b_fit <- gpd_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$time_var, qthreshold, init)
   get_far(b_fit, pnt0, pnt1, under_threshold=TRUE)
 }
 
-boot_func.gev_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
+boot_func.gev_fit <- function(object, indices, pnt0, pnt1, use_init=TRUE, ...){
   init <- NULL
-  if(use_init) init <- y_fit$par
-  bdat <- y_fit$data[indices,]
-  b_fit <- gev_fit(y_fit$y[indices], bdat, y_fit$mu_mod, y_fit$sig_mod, y_fit$time_var, init)
+  if(use_init) init <- object$par
+  bdat <- object$data[indices,]
+  b_fit <- gev_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$time_var, init)
   get_far(b_fit, pnt0, pnt1)
 }
 
-boot_func.gauss_fit <- function(y_fit, indices, pnt0, pnt1, use_init=TRUE, ...){
+boot_func.gauss_fit <- function(object, indices, pnt0, pnt1, use_init=TRUE, ...){
   init <- NULL
-  if(use_init) init <- y_fit$par
-  bdat <- y_fit$data[indices,]
-  b_fit <- gauss_fit(y_fit$y[indices], bdat, y_fit$mu_mod, y_fit$sig2_mod, y_fit$time_var, init)
+  if(use_init) init <- object$par
+  bdat <- object$data[indices,]
+  b_fit <- gauss_fit(object$y[indices], bdat, object$mu_mod, object$sig2_mod, object$time_var, init)
   get_far(b_fit, pnt0, pnt1)
 }
 

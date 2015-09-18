@@ -54,7 +54,8 @@ bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, t
     abline(h=crit_ci, lty=2)
     boxcox(as.formula(complete_formula(y,mu_mod)),lambda=l_lambda)
   }
-  class(res) <- "bc_fit"
+  class(res) <- "trans"
+  class(res) <- append(class(res), "bc_fit")
   res
 }
 

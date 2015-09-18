@@ -2,16 +2,6 @@ library(devtools)
 library(boot)
 devtools::load_all("..") 
 
-set_fparam <- function(f, gfit){
-  l <- formals(f)
-  for( p in names(l)){
-    #     print('-------------------') 
-    #     print(p)
-    #     print(gfit[[p]] )
-    l[[p]] <- gfit[[p]]
-  }
-  l
-}
 
 n <- 350
 t <- seq(1,n)
@@ -66,11 +56,13 @@ pnt0_bc <- transform_pnt(y_bc, pnt0)
 get_far(y_bc_fit, pnt0_bc, pnt1_bc)
 
 get_far.bc_fit(y_bc, y_bc_fit, pnt0, pnt1)
+get_far(y_bc, y_bc_fit, pnt0, pnt1)
 
 bf_bc <- boot_func.bc_fit(y_bc, y_bc_fit, indices=1:length(y), pnt0, pnt1)
 sb_bc <- simple_boot(y_bc_fit, boot_func.bc_fit, y_trans=y_bc, pnt0=pnt0, pnt1=pnt1)
 
-bic_bc <- boot_ic.bc_fit(xp, t0, t1, y_bc,  y_bc_fit)
+bic_bc <- boot_ic.trans(y_bc,  y_bc_fit, xp, t0, t1)
+bic_bc <- boot_ic(y_bc,  y_bc_fit, xp, t0, t1)
 
 
 y_std <- standardize(y, data=NULL, mu_mod=~covariate, sig2_mod=~covariate, to_plot=TRUE)
@@ -87,34 +79,17 @@ y_std_fit <- gpd_fit(y_std$y_std ,  ydat, time_var="year", qthreshold=1-rate)
 get_far(y_std_fit, pnt0_std, pnt1_std)
 
 get_far.std(y_std, y_std_fit, pnt0, pnt1)
+get_far(y_std, y_std_fit, pnt0, pnt1)
 
 bf_std <- boot_func.std(y_std, y_std_fit, indices=1:length(y), pnt0, pnt1)
 sb_std <- simple_boot(y_std_fit, boot_func.std, y_trans=y_std, pnt0=pnt0, pnt1=pnt1)
 
 print(system.time({
-  bic_std <- boot_ic.std(xp, t0, t1, y_std,  y_std_fit)
+  bic_std <- boot_ic.trans(y_std,  y_std_fit, xp, t0, t1)
+  bic_std <- boot_ic(y_std,  y_std_fit, xp, t0, t1)
 }))
 
-gp_fit <- gpd_fit(y, ydat, mu_mod=~covariate, sig_mod=~covariate, time_var=year, qthreshold=0.8)
-bic <- boot_ic(xp, t0, t1, gp_fit)
-gp_fit <- gpd_fit(y, ydat, mu_mod=~covariate, sig_mod=~covariate, time_var="year", qthreshold=0.8)
-bic <- boot_ic(xp, t0, t1, gp_fit)
-
-boot_std <- function(data, indices, y, pnt0, pnt1, qthreshold){
-  data_b <- data[indices,]
-  y_b <- y[indices]
-  y_std <- standardize(y_b, data=data_b, mu_mod=~covariate, sig2_mod=~covariate, to_plot=FALSE)
-  get_far.std(y_std, pnt0, pnt1, qthreshold)
-}
-
-bres_std <- boot(ydat, boot_std, R=100, y=y, pnt0=pnt0, pnt1=pnt1, qthreshold=attr(far_std, "gpd_fit")$rq_fitted$tau)
-colnames(bres_std$t) <- names(far_std)
-ic_std <- apply(bres_std$t, 2, quantile, probs=c(0.05, 0.5, 0.95)) 
-
-
-
-
-# muscsh=findpars(y_std.fit)
+# muscsh=findpars(y_trans.fit)
 # muscsh$mu=rep(threshold,length(muscsh$scale))
 # z95f=evmix::qgpd(rep(0.95,length(muscsh$mu)),u=muscsh$mu,sigmau=muscsh$scale,xi=muscsh$shape,phiu=rate)
 # y95f=zp2yp(lambda,mu=mu.pred,sigma=sigma.pred,zp=z95f)*sf
