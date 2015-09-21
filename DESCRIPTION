@@ -14,5 +14,7 @@ Imports:
     alabama,
     extRemes,
     quantreg,
-    parallel
+    parallel,
+    evmix,
+    MASS
 Suggets: testthat
