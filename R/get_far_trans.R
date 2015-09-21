@@ -9,28 +9,29 @@ set_fparam <- function(f, gfit){
   l
 }
 
+#' @rdname get_far 
 #' @export
-get_far.trans <- function(y_trans, y_fit, pnt0, pnt1, qthreshold=NULL){
-  pnt1_trans <- transform_pnt(y_trans, pnt1)
-  pnt0_trans <- transform_pnt(y_trans, pnt0)
-  far <- get_far(y_fit, pnt0_trans, pnt1_trans)
+get_far.trans <- function(object, y_fit, pnt0, pnt1, qthreshold=NULL, ...){
+  pnt1_trans <- transform_pnt(object, pnt1)
+  pnt0_trans <- transform_pnt(object, pnt0)
+  far <- get_far(y_fit, pnt0_trans, pnt1_trans, ...)
   far
 }
 
-boot_func.bc_fit <- function(object, y_fit, indices, pnt0, pnt1){
+boot_func.bc_fit <- function(object, y_fit, indices, pnt0, pnt1, ...){
   print(indices)
   y <- object$y[indices]
   data <- object$data[indices,]
-  y_bc <- bc_fit(object$l_lambda, y, data, mu_mod=object$mu_mod, sig2_mod=object$sig2_mod, time_var=object$time_var)
+  y_bc <- bc_fit(object$l_lambda, y, data, mu_mod=object$mu_mod, sig2_mod=object$sig2_mod, time_var=y_fit$time_var)
   fit_method <- eval(parse(text=class(y_fit))) 
   fit_inputs <- as.list(set_fparam(fit_method, y_fit)) 
   fit_inputs$y <- y_bc$y_std 
   fit_inputs$data <- data 
   y_bc_fit  <- do.call(fit_method, fit_inputs)
-  get_far.trans(y_bc, y_bc_fit, pnt0, pnt1)
+  get_far.trans(y_bc, y_bc_fit, pnt0, pnt1, ...)
 }
 
-boot_func.std <- function(object, y_fit, indices, pnt0, pnt1){
+boot_func.std <- function(object, y_fit, indices, pnt0, pnt1, ...){
   #   print(indices)
   y <- object$y[indices]
   data <- object$data[indices,]
@@ -40,15 +41,16 @@ boot_func.std <- function(object, y_fit, indices, pnt0, pnt1){
   fit_inputs$y <- y_std$y_std 
   fit_inputs$data <- data 
   y_std_fit  <- do.call(fit_method, fit_inputs)
-  get_far(y_std, y_std_fit, pnt0, pnt1)
+  get_far(y_std, y_std_fit, pnt0, pnt1, ...)
 }
 
+#' @rdname boot_ic 
 #' @export
 boot_ic.trans <- function(object, y_fit, xp, t0, t1, ci_p=0.95, ...){
   pnt0 <- set_pnt(t0, xp, y_fit$time_var, y_fit$data)
   pnt1 <- set_pnt(t1, xp, y_fit$time_var, y_fit$data)
-  far_mle <- get_far.trans(object, y_fit, pnt0, pnt1)
-  boot_res <- simple_boot(y_fit, boot_func, object=object, pnt0=pnt0, pnt1=pnt1)
+  far_mle <- get_far.trans(object, y_fit, pnt0, pnt1, ...)
+  boot_res <- simple_boot(y_fit, boot_func, object=object, pnt0=pnt0, pnt1=pnt1, ...)
   alpha <- 1-ci_p
   far_boot <- boot_res["FAR", ]
   ic_boot <- quantile(far_boot, probs=c(alpha/2, .5, 1-alpha/2))

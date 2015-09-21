@@ -1,6 +1,15 @@
 #' @importFrom evmix fgpd 
 #' @importFrom MASS  boxcox
+NULL
 
+#' Apply the boxcox transformation to an univariate time-serie.
+#' 
+#' Apply the boxcox transformation to an univariate time-serie.
+#' 
+#' The univarite time-serie must be positive
+#' @param x a vector of values.
+#' @param lambda the scalar parameter of the boxcox transformation.
+#' @return returns a vector of transformed values.
 #' @export
 bc <- function(x,lambda){
   y=NA
@@ -16,8 +25,50 @@ lambda_prof <- function(lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, init=
 	y_fit
 }
 
+#' Lambda selection and application of the boxcox transformation. 
+#' 
+#' Select a lambda and apply the boxcox transformation to make rhe data more gaussian.
+#' 
+#' The selection is lambda is done using the profile likelihood method. The aims is to find the lambda which maximize the likelihood of independant gaussian variables. The mean and the variance of the gaussian variables can be modelled as being linearly dependent on a specified set of covariates. The data are first normalized by \code{exp(mean(log(y)))} to make the optimization step easier.
+#' @param l_lambda a vector of lambda value  the profile likelihood will be computed at.
+#' @param y a univarite time-serie.
+#' @param data a data.frame with the values for the covariates used to model the mean and the variance of the gaussian variables.
+#' @param mu_mod a formula giving the list of covariates the mean parameter of the gaussians depends on.
+#' @param sig2_mod a formula giving the list of covariates the variabces parameter of the gaussians depends on
+#' @param time_var the variable used as time for the time serie.
+#' @param ci_p the level of the confidence intervals wanted.
+#' @param to_plot whether to plot the profile likelihood.
+#' @return returns a list with the arguments of the function as well as :
+#' \itemize{
+#' \item y_eml, the original time serie normalize by  \code{exp(mean(log(y)))}.
+#' \item y_lambda, the original time serie using to the boxcox transformation .
+#' \item y_std, the standardized time serie.
+#' \item mu_fit, the linear model fitted for the trend.
+#' \item sig2_fit, the linear model fitted for the variance.
+#'}
+#' @examples
+#'data(tas)
+#'eur_tas_positive <- with(tas, eur_tas + abs(min(eur_tas)) +1)
+#'y_bc <- bc_fit(l_lambda=seq(-1, 1, 0.02), y=eur_tas_positive, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year", to_plot=TRUE)
+#'y_bc_fit <- gpd_fit(y_bc$y_std ,  data=tas, time_var="year", qthreshold=0.8)
+#'t1 <- 2003
+#'t0 <- 1990
+#'xp <- 1.6
+#'pnt1 <- set_pnt(t1, xp, time_var="year", tas)
+#'pnt0 <- set_pnt(t0, xp, time_var="year", tas)
+#'get_far(y_bc, y_bc_fit, pnt0, pnt1, under_threshold=TRUE)
+#'boot_ic(y_bc,  y_bc_fit, xp, t0, t1, under_threshold=TRUE)
 #' @export
 bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, to_plot=FALSE){
+  stopifnot(!is.null(data))
+  y_name <- paste(deparse(substitute(y)), collapse="")
+  if(is.element(y_name, names(data)))
+    y <- data[, y_name]
+  y_name <- "y"
+  if(is.element("y", names(data))){
+    y_name <- random_name(data=data)
+    assign(y_name, y)
+  }
   stopifnot(all(y > 0))
   #for the stability of the boxcox trannsformation
   # maybe should not erase the original y
@@ -52,14 +103,13 @@ bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, t
     abline(v=res$ci[1], lty=2)
     abline(v=res$ci[2], lty=2)
     abline(h=crit_ci, lty=2)
-    boxcox(as.formula(complete_formula(y,mu_mod)),lambda=l_lambda)
+    boxcox(as.formula(complete_formula(y_name,mu_mod)), data=data, lambda=l_lambda)
   }
   class(res) <- "trans"
   class(res) <- append(class(res), "bc_fit")
   res
 }
 
-#' @export
 transform_newdat.bc_fit <- function(y_trans, y, newdata, ...){
   y <- y / exp(mean(log(y_trans$y)))
   y_lambda <- bc(y, y_trans$lambda)
@@ -68,8 +118,9 @@ transform_newdat.bc_fit <- function(y_trans, y, newdata, ...){
   data.frame(y, y_lambda, y_std)
 }
 
+#' @rdname transform_pnt
 #' @export
-transform_pnt.bc_fit <- function(y_trans, pnt){
+transform_pnt.bc_fit <- function(y_trans, pnt, ...){
   # if several y in pnt data.frame, it takes the first one
   pnt$y <- as.numeric(transform_newdat.bc_fit(y_trans, y=pnt$y, newdata=pnt[, -1])$y_std)
   pnt
