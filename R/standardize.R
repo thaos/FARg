@@ -28,13 +28,14 @@
 standardize <- function(y, data, mu_mod=~1, sig2_mod=~1){
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
-  if(is.element(y_name, names(data)))
-    y <- data[, y_name]
-  y_name <- "y"
-  if(is.element("y", names(data))){
-    y_name <- random_name(data=data)
-    assign(y_name, y)
-  }
+  #   if(is.element(y_name, names(data)))
+  #     y <- data[, y_name]
+  #   y_name <- "y"
+  #   if(is.element("y", names(data))){
+  #     y_name <- random_name(data=data)
+  #     assign(y_name, y)
+  #   }
+  y_name <- check_y_name(y, y_name, data)
   y_fit <- lm.fit(x=model.matrix(mu_mod, data=data), y=get(y_name))
   r2 <- residuals(y_fit)^2
   r2_fit  <- lm.fit(x=model.matrix(sig2_mod, data=data), y=r2)
@@ -92,11 +93,12 @@ transform_newdat.std <- function(y_trans, y, newdata, ...){
 #'pnt0_std <- transform_pnt(y_std, pnt0)
 #'get_far(y_std_fit, pnt0_std, pnt1_std)
 #'
-#'y_bc <- boxcox(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas)
+#'eur_tas_positive <- with(tas, eur_tas + abs(min(eur_tas)) +1)
+#'y_bc <- bc_fit(l_lambda=seq(-1, 1, 0.02), y=eur_tas_positive, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year", to_plot=TRUE)
 #'y_bc_fit <- gpd_fit(y_bc$y_std ,  data=tas, time_var="year", qthreshold=0.8)
 #'pnt1_bc <- transform_pnt(y_bc, pnt1)
 #'pnt0_bc <- transform_pnt(y_bc, pnt0)
-#'get_far(y_bc_fit, pnt0_bc, pnt1_bc)
+#'get_far(y_bc_fit, pnt0_bc, pnt1_bc, under_threshold=TRUE)
 #' @export
 transform_pnt <- function(y_trans, pnt, ...){
  UseMethod("transform_pnt")

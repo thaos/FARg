@@ -57,18 +57,19 @@ lambda_prof <- function(lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, init=
 #'pnt1 <- set_pnt(t1, xp, time_var="year", tas)
 #'pnt0 <- set_pnt(t0, xp, time_var="year", tas)
 #'get_far(y_bc, y_bc_fit, pnt0, pnt1, under_threshold=TRUE)
-#'boot_ic(y_bc,  y_bc_fit, xp, t0, t1, under_threshold=TRUE)
+#'\donttest{ boot_ic(y_bc,  y_bc_fit, xp, t0, t1, under_threshold=TRUE)}
 #' @export
 bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, to_plot=FALSE){
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
-  if(is.element(y_name, names(data)))
-    y <- data[, y_name]
-  y_name <- "y"
-  if(is.element("y", names(data))){
-    y_name <- random_name(data=data)
-    assign(y_name, y)
-  }
+  #   if(is.element(y_name, names(data)))
+  #     y <- data[, y_name]
+  #   y_name <- "y"
+  #   if(is.element("y", names(data))){
+  #     y_name <- random_name(data=data)
+  #     assign(y_name, y)
+  #   }
+  y_name <- check_y_name(y, y_name, data)
   stopifnot(all(y > 0))
   #for the stability of the boxcox trannsformation
   # maybe should not erase the original y

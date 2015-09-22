@@ -34,7 +34,7 @@ simple_boot <- function(y_fit, statistic, R=250, seed=1, ...){
 #'pnt1 <- set_pnt(t1, xp, time_var="year", tas)
 #'pnt0 <- set_pnt(t0, xp, time_var="year", tas)
 
-#'b_gpd <- boot_ic(gp_fit, xp, t0, t1, ci_p=0.95)
+#'b_gpd <- boot_ic(gp_fit, xp, t0, t1, ci_p=0.95, under_threshold=TRUE)
 #'b_gev <- boot_ic(ge_fit, xp, t0, t1, ci_p=0.95)
 #'b_gauss <- boot_ic(ga_fit, xp, t0, t1, ci_p=0.95)
 #'

@@ -7,6 +7,19 @@
 #' @importFrom quantreg predict.rq 
 NULL
 
+check_y_name <- function(y, y_name, data){
+  if(is.element(y_name, names(data))){
+    y <- data[, y_name]
+    assign("y", y, envir=parent.frame())
+  }
+  assign("y_name", "y", envir=parent.frame())
+  if(is.element("y", names(data))){
+    y_name <- random_name(data=data)
+    assign(y_name, y, envir=parent.frame())
+  }
+  y_name
+}
+
 random_name <- function(n=5, data){
   ans <- paste(sample(letters, n), collapse="")
   while(is.element(ans, names(data))) 
@@ -86,13 +99,14 @@ gauss_fit <- function(y, data, mu_mod=~1, sig2_mod=~1, time_var, init=NULL){
   stopifnot(exist_time_var(time_var, data))
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
-  if(is.element(y_name, names(data)))
-    y <- data[, y_name]
-  y_name <- "y"
-  if(is.element("y", names(data))){
-    y_name <- random_name(data=data)
-    assign(y_name, y)
-  }
+  #   if(is.element(y_name, names(data)))
+  #     y <- data[, y_name]
+  #   y_name <- "y"
+  #   if(is.element("y", names(data))){
+  #     y_name <- random_name(data=data)
+  #     assign(y_name, y)
+  #   }
+  y_name <- check_y_name(y, y_name, data)
   nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
 	gauss_lik <- function(init){
     init_f <- format_init.gauss_fit(init, mu_mod, sig2_mod)
@@ -155,13 +169,14 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
   stopifnot(exist_time_var(time_var, data))
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
-  if(is.element(y_name, names(data)))
-    y <- data[, y_name]
-  y_name <- "y"
-  if(is.element("y", names(data))){
-    y_name <- random_name(data=data)
-    assign(y_name, y)
-  }
+  #   if(is.element(y_name, names(data)))
+  #     y <- data[, y_name]
+  #   y_name <- "y"
+  #   if(is.element("y", names(data))){
+  #     y_name <- random_name(data=data)
+  #     assign(y_name, y)
+  #   }
+  y_name <- check_y_name(y, y_name, data)
   completed_formula <- complete_formula(y_name, mu_mod)
   rq_fitted <- rq(as.formula(completed_formula),data=data, tau=qthreshold)
 	threshold <- predict(rq_fitted)
@@ -228,13 +243,14 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
   stopifnot(exist_time_var(time_var, data))
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse=" ")
-  if(is.element(y_name, names(data)))
-    y <- data[, y_name]
-  y_name <- "y"
-  if(is.element("y", names(data))){
-    y_name <- random_name(data=data)
-    assign(y_name, y)
-  }
+  #   if(is.element(y_name, names(data)))
+  #     y <- data[, y_name]
+  #   y_name <- "y"
+  #   if(is.element("y", names(data))){
+  #     y_name <- random_name(data=data)
+  #     assign(y_name, y)
+  #   }
+  y_name <- check_y_name(y, y_name, data)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
 		init  <- fevd(as.formula(paste(y_name, "~ 1")), data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE")$results
@@ -348,7 +364,7 @@ compute_par.gauss_fit <- function(object, newdata){
 #' @examples
 #'data(tas)
 #' #Example with the same covariate for the mean and variance parameter
-#' ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
+#' ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
 #' # get the values of the mean and variance parameters of the gaussian at each time
 #'compute_par(ga_fit, tas)
 #' # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
@@ -386,7 +402,7 @@ plot.gauss_fit <- function(x, ...){
 #'print(ga_fit)
 #' ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
 #'print(ge_fit)
-#' gp_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
+#' gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
 #'print(gp_fit)
 #' @export
 print.gpd_fit <- function(x, ...){
