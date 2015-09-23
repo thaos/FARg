@@ -1,5 +1,4 @@
-rm(list=ls())
-library(quantreg)
+library(FARg)
 
 data(tas)
 ydat <- with(tas,as.data.frame(cbind(year, eur_tas, avg_gbl_tas, avg_gbl_tas)))
@@ -7,8 +6,6 @@ names(ydat) <- c("year", "y", "mu_var", "sig_var")
 
 ge_fit <- gev_fit(tas$eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
 plot(ge_fit)
-rq_fitted <- rq(y~mu_var, data=ydat, tau=0.90)
-threshold <- predict(rq_fitted)
 gp_fit <- gpd_fit(tas$eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
 compute_par(gp_fit, tas)
 plot(gp_fit)

@@ -6,13 +6,13 @@
 #' @importFrom quantreg rq 
 #' @importFrom quantreg predict.rq 
 NULL
-
+# Used to check whether y or y_name is in data which can lead to model mispecification when forula are used. 
 check_y_name <- function(y, y_name, data){
   if(is.element(y_name, names(data))){
     y <- data[, y_name]
     assign("y", y, envir=parent.frame())
   }
-  assign("y_name", "y", envir=parent.frame())
+  y_name <- "y"
   if(is.element("y", names(data))){
     y_name <- random_name(data=data)
     assign(y_name, y, envir=parent.frame())

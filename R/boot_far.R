@@ -45,7 +45,7 @@ boot_ic <- function(object, ...){
 
 #' @rdname boot_ic 
 #' @export
-boot_ic.default <- function(object, xp,t0, t1, ci_p=0.95, use_init=TRUE, ...){
+boot_ic.default <- function(object, xp, t0, t1, ci_p=0.95, use_init=TRUE, ...){
   pnt0 <- set_pnt(t0, xp, time_var=object$time_var, object$data)
   pnt1 <- set_pnt(t1, xp, time_var=object$time_var, object$data)
   far_mle <- get_far(object, pnt0, pnt1, ...)

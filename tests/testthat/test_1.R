@@ -20,7 +20,7 @@ test_that("classes are OK", {
 )
 
 # plot(gpd_fit(ydat, qthreshold=0.9))
-e gev_fit(ydat)
+#  gev_fit(ydat)
 # plot(gev_fit(ydat))
 # gauss_fit(ydat)
 # plot(gauss_fit(ydat))

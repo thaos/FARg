@@ -1,7 +1,8 @@
+library(FARg)
+library(evmix)
 # library(devtools)
-library(boot)
+# library(boot)
 # devtools::load_all("..") 
-
 
 n <- 350
 t <- seq(1,n)
@@ -53,40 +54,40 @@ y_bc_fit <- gpd_fit(y_bc$y_std,  ydat, time_var="year", qthreshold=1-rate)
 y_bc_fit <- gpd_fit(y_bc$y_std,  ydat, time_var=year, qthreshold=1-rate)
 pnt1_bc <- transform_pnt(y_bc, pnt1)
 pnt0_bc <- transform_pnt(y_bc, pnt0)
-get_far(y_bc_fit, pnt0_bc, pnt1_bc)
+get_far(y_bc_fit, pnt0_bc, pnt1_bc, under_threshold=TRUE)
 
-get_far.bc_fit(y_bc, y_bc_fit, pnt0, pnt1)
-get_far(y_bc, y_bc_fit, pnt0, pnt1)
+# get_far.trans(y_bc, y_bc_fit, pnt0, pnt1)
+get_far(y_bc, y_bc_fit, pnt0, pnt1, under_threshold=TRUE)
 
-bf_bc <- boot_func.bc_fit(y_bc, y_bc_fit, indices=1:length(y), pnt0, pnt1)
-sb_bc <- simple_boot(y_bc_fit, boot_func.bc_fit, y_trans=y_bc, pnt0=pnt0, pnt1=pnt1)
+# bf_bc <- boot_func.bc_fit(y_bc, y_bc_fit, indices=1:length(y), pnt0, pnt1)
+# sb_bc <- simple_boot(y_bc_fit, boot_func.bc_fit, y_trans=y_bc, pnt0=pnt0, pnt1=pnt1)
 
-bic_bc <- boot_ic.trans(y_bc,  y_bc_fit, xp, t0, t1)
-bic_bc <- boot_ic(y_bc,  y_bc_fit, xp, t0, t1)
+# bic_bc <- boot_ic.trans(y_bc,  y_bc_fit, xp, t0, t1)
+bic_bc <- boot_ic(y_bc,  y_bc_fit, xp, t0, t1, under_threshold=TRUE)
 
 
-y_std <- standardize(y, data=NULL, mu_mod=~covariate, sig2_mod=~covariate, to_plot=TRUE)
-y_std <- standardize(y, data=ydat, mu_mod=~covariate, sig2_mod=~covariate, to_plot=TRUE)
+# y_std <- standardize(y, data=NULL, mu_mod=~covariate, sig2_mod=~covariate)
+y_std <- standardize(y, data=ydat, mu_mod=~covariate, sig2_mod=~covariate)
 tc=tcplot(y_std$y_std, c(quantile(y_std$y_std, 0.5), max(y_std$y_std)))
 threshold <-  select_thresh(tc) 
 rate=mean(y_std$y_std >= threshold)
 pnt1_std <- transform_pnt(y_std, pnt1)
 pnt0_std <- transform_pnt(y_std, pnt0)
 y_std_fit <- gpd_fit(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22:nrow(ydat)) ,  ydat, time_var="year", qthreshold=1-rate)
-y_std_fit <- gpd_fit(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22:nrow(ydat)) ,  data = NULL, time_var="year", qthreshold=1-rate)
+try(y_std_fit <- gpd_fit(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22:nrow(ydat)) ,  data = NULL, time_var="year", qthreshold=1-rate))
 y_std_fit <- gpd_fit(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22:nrow(ydat)) ,  data = ydat[,"covariate", drop=FALSE], time_var="year", qthreshold=1-rate)
 y_std_fit <- gpd_fit(y_std$y_std ,  ydat, time_var="year", qthreshold=1-rate)
-get_far(y_std_fit, pnt0_std, pnt1_std)
+get_far(y_std_fit, pnt0_std, pnt1_std, under_threshold=TRUE)
 
-get_far.std(y_std, y_std_fit, pnt0, pnt1)
-get_far(y_std, y_std_fit, pnt0, pnt1)
+# get_far.trans(y_std, y_std_fit, pnt0, pnt1)
+get_far(y_std, y_std_fit, pnt0, pnt1, under_threshold=TRUE)
 
-bf_std <- boot_func.std(y_std, y_std_fit, indices=1:length(y), pnt0, pnt1)
-sb_std <- simple_boot(y_std_fit, boot_func.std, y_trans=y_std, pnt0=pnt0, pnt1=pnt1)
+# bf_std <- boot_func.std(y_std, y_std_fit, indices=1:length(y), pnt0, pnt1)
+# sb_std <- simple_boot(y_std_fit, boot_func.std, y_trans=y_std, pnt0=pnt0, pnt1=pnt1)
 
 print(system.time({
-  bic_std <- boot_ic.trans(y_std,  y_std_fit, xp, t0, t1)
-  bic_std <- boot_ic(y_std,  y_std_fit, xp, t0, t1)
+  #   bic_std <- boot_ic.trans(y_std,  y_std_fit, xp, t0, t1)
+  bic_std <- boot_ic(y_std,  y_std_fit, xp, t0, t1, under_threshold=TRUE)
 }))
 
 # muscsh=findpars(y_trans.fit)
