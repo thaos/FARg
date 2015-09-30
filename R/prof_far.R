@@ -48,7 +48,7 @@ prof_ic=function(y_fit, xp, t0, t1, ci_p=0.95 ,to_plot=FALSE, ...){
   print(far)
   fit_check <- optimize_constr(y_fit, pnt0, pnt1, p0p1)
   if(!isTRUE(all.equal(fit_check$value, overall_max))){
-    message("Slightly different results with constraint optimization")
+    message("Slightly different results with constrained optimization")
     print(fit_check$value)
     print(overall_max)
     #             stop()

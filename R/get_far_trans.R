@@ -48,11 +48,11 @@ boot_func.std <- function(object, y_fit, indices, pnt0, pnt1, use_init=TRUE, ...
 
 #' @rdname boot_ic 
 #' @export
-boot_ic.trans <- function(object, y_fit, xp, t0, t1, ci_p=0.95, use_init=TRUE, ...){
+boot_ic.trans <- function(object, y_fit, xp, t0, t1, ci_p=0.95, use_init=TRUE, R=250, ...){
   pnt0 <- set_pnt(t0, xp, y_fit$time_var, y_fit$data)
   pnt1 <- set_pnt(t1, xp, y_fit$time_var, y_fit$data)
   far_mle <- get_far.trans(object, y_fit, pnt0, pnt1, ...)
-  boot_res <- simple_boot(y_fit, boot_func, object=object, pnt0=pnt0, pnt1=pnt1, use_init=use_init, ...)
+  boot_res <- simple_boot(y_fit, boot_func, object=object, pnt0=pnt0, pnt1=pnt1, use_init=use_init, R=R, ...)
   alpha <- 1-ci_p
   far_boot <- boot_res["FAR", ]
   ic_boot <- quantile(far_boot, probs=c(alpha/2, .5, 1-alpha/2))

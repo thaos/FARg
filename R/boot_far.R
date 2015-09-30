@@ -20,6 +20,7 @@ simple_boot <- function(y_fit, statistic, R=250, seed=1, ...){
 #' @param t1 the time t1 to compute the probability of exeeding xp. If the time t1 is not present in dataset used for fitting the model, the closes time of the dataset is used.
 #' @param ci_p the confidence level of the confidence intervals (between 0 and 1).
 #' @param use_init whether to use the parameters fitted in object of class gauss_fit, gev_fit, or gpd_fit, to initialize the fir on the bootstrap sample.
+#' @param R the number of bootstrap samples.
 #' @param ... Arguments to be passed to methods,
 #' @examples
 #'data(tas)
@@ -45,13 +46,13 @@ boot_ic <- function(object, ...){
 
 #' @rdname boot_ic 
 #' @export
-boot_ic.default <- function(object, xp, t0, t1, ci_p=0.95, use_init=TRUE, ...){
+boot_ic.default <- function(object, xp, t0, t1, ci_p=0.95, use_init=TRUE, R=250...){
   pnt0 <- set_pnt(t0, xp, time_var=object$time_var, object$data)
   pnt1 <- set_pnt(t1, xp, time_var=object$time_var, object$data)
   far_mle <- get_far(object, pnt0, pnt1, ...)
   #   log <- capture.output({
     #     boot_res=boot(data=object, statistic=boot_func, R=250,  pnt0=pnt0, pnt1=pnt1, use_init=use_init, parallel="snow")
-    boot_res=simple_boot(object, statistic=boot_func, R=250, pnt0=pnt0, pnt1=pnt1, use_init=use_init, ...)
+    boot_res=simple_boot(object, statistic=boot_func, R=R, pnt0=pnt0, pnt1=pnt1, use_init=use_init, ...)
   #   })
   alpha <- 1-ci_p
   far_boot <- boot_res[1,]
