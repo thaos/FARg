@@ -70,6 +70,8 @@ bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, t
   #     assign(y_name, y)
   #   }
   y_name <- check_y_name(y, y_name, data)
+	mu_terms <- terms(mu_mod)
+	sig2_terms <- terms(sig2_mod)
   stopifnot(all(y > 0))
   #for the stability of the boxcox trannsformation
   # maybe should not erase the original y
@@ -94,9 +96,9 @@ bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, t
   res$y_eml <- y_eml
   res$y <- y
   res$data <- data
-  init_f  <-  format_init.gauss_fit(res$par, mu_mod, sig2_mod)
+  init_f  <-  format_init.gauss_fit(res$par, mu_terms, sig2_terms)
   par_gauss <- compute_par.gauss_fit(res, res$data)
-  res$y_std <- (res$y_lambda - par_gauss$mu) / sqrt(par_gauss$sig2)
+  res$y_std <- (res$y_lambda - par_gauss[, 1]) / sqrt(par_gauss[, 2])
   if(to_plot){
     par(mfrow=c(1,2))
     plot(l_lambda[cond], l_prof[cond],type="l",ylab="")
@@ -115,7 +117,7 @@ transform_newdat.bc_fit <- function(y_trans, y, newdata, ...){
   y <- y / exp(mean(log(y_trans$y)))
   y_lambda <- bc(y, y_trans$lambda)
   par_gauss <- compute_par.gauss_fit(y_trans, newdata )
-  y_std <- (y_lambda - par_gauss$mu) / sqrt(par_gauss$sig2)
+  y_std <- (y_lambda - par_gauss[, 1]) / sqrt(par_gauss[, 2])
   data.frame(y, y_lambda, y_std)
 }
 

@@ -62,7 +62,11 @@ prof_ic=function(y_fit, xp, t0, t1, ci_p=0.95 ,to_plot=FALSE, ...){
   aalpha <- qchisq(ci_p, 1)
   f_roots <- function(ratio){
     print(ratio)
+    #     Rprof(tmp <- tempfile(), line.profiling=TRUE)
     parmax  <-  -profil_optim(y_fit, pnt0, pnt1, R=ratio)
+    #     Rprof()
+    #     print(summaryRprof(tmp))
+    #     browser()
     parmax + aalpha/2 + overall_max 
   }
   print("BORNE INF-------------------------------------------")

@@ -59,7 +59,7 @@ tcplot <- function(data, tlim=NULL, nt=min(100, length(data)), alpha=0.05) {
 
 #' Select threshold from tcplot output.
 #' 
-#' Select trheshold from threshold stability plot from the tcplot function of the evmix package.
+#' Select threshold from threshold stability plot from the tcplot function of the evmix package.
 #' 
 #' The threhshold is selected such as as the minimum threshold for which the transformed parameters of the GPD model fitted are within the confidence intervals for every higher threshold.
 #' @param tc result from the tcplot function of the evmix packages

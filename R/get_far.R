@@ -78,8 +78,8 @@ get_p <- function(y_fit, pnt, ...){
 #' @export
 get_p.gauss_fit <- function(y_fit, pnt, ...){
   par <- compute_par.gauss_fit(y_fit, newdata=pnt[, -1])
-	res <- pnorm(pnt$y, mean=par$mu, sd=sqrt(par$sig2), lower.tail=FALSE)
-	res <- c(res, par$mu, par$sig)
+	res <- pnorm(pnt$y, mean=par[, 1], sd=sqrt(par[, 2]), lower.tail=FALSE)
+	res <- c(res, par[, 1], par[, 2])
 	names(res)=c("p","mu","sigma2")
 	res
 }
@@ -94,7 +94,7 @@ get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
   par <- compute_par.gpd_fit(y_fit, newdata=pnt[, -1])
 	phi <- y_fit$rate
 	if (y_cord > threshold)
-		res <- pevd(y_cord, threshold=threshold, scale=par$sig, shape=par$xi, type="GP", lower.tail=FALSE) * phi
+		res <- pevd(y_cord, threshold=threshold, scale=par[, 2], shape=par[, 3], type="GP", lower.tail=FALSE) * phi
 	else {
 		findP <- function(par, pnt, y_fit){
       rq_fitted <- rq(as.formula(complete_formula(y_fit$y, y_fit$mu_mod)), data=y_fit$data, tau=par)
@@ -105,7 +105,7 @@ get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
 		res <- res$minimum
 		res <- 1-res
 	}		
-	res <- c(res, threshold, par$sig, par$xi)
+	res <- c(res, threshold, par[, 2], par[ ,3])
 	names(res) <- c("p","treshold","sigma","shape")
 	res
 }
@@ -114,8 +114,8 @@ get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
 #' @export
 get_p.gev_fit <- function(y_fit, pnt, ...){
   par <- compute_par.gev_fit(y_fit, newdata=pnt[, -1])
-	res <- pevd(pnt$y, loc=par$mu, scale=par$sig, shape=par$xi ,lower.tail=FALSE)
-	res <- c(res, par$mu, par$sig, par$xi)
+	res <- pevd(pnt$y, loc=par[, 1], scale=par[, 2], shape=par[, 3] ,lower.tail=FALSE)
+	res <- c(res, par[, 1], par[ ,2], par[, 3])
 	names(res) <- c("p","mu","sigma","shape")
 	res
 }
@@ -199,8 +199,7 @@ set_pnt <- function(time, y, time_var="", data=NULL){
       time_name <- time_var
       if(!is.character(time_name))
         time_name <- paste(deparse(substitute(time_name)), collapse=" ")
-      time_formula <- paste(time_name, "~ 1", sep="")
-      time_var <- as.numeric(model.frame(as.formula(time_formula), data=data)[[1]])
+      time_var <- data[,time_name]
   })
   i <- min(which.min(abs(time - time_var)))
 	cbind(y,data[i,])

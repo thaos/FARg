@@ -34,9 +34,24 @@ exist_time_var <- function(time_var, data){
     return(exists(paste(deparse(substitute(time_var)), collapse=" ")) || !inherits(time_var, "simpleError"))
 }
 
-get_param <- function(par, mod, data){
-  mat <- model.matrix(mod, data=data)
-  param <- mat %*% par
+get_mod_mat <- function(mod_terms, data){
+  terms_lab <- attr(mod_terms,"term.labels")
+  terms_int <- attr(mod_terms,"intercept")
+  ans <- matrix(1,nrow=nrow(data),ncol=length(terms_lab)+terms_int)
+  if(length(terms_lab) > 0)
+  ans[,(ncol(ans)-length(terms_lab)+1) : ncol(ans)] <- data[, terms_lab]
+  ans
+  #   model.matrix(mod, data)
+}
+
+get_param <- function(par, mod_mat){
+  param <- mod_mat %*% par
+  param
+}
+
+get_param_formula <- function(par, mod_terms, data){
+  mod_mat <- get_mod_mat(mod_terms, data)
+  get_param(par, mod_mat)
 }
 
 complete_formula <- function(y, uncomplete_f){
@@ -67,8 +82,8 @@ gev_negll <- function(y, mu, sig, xi){
 	levd(x=y, location=mu, scale=sig, shape=xi, type="GEV")
 }
 
-format_init.gauss_fit <- function(init, mu_mod=~1, sig2_mod=~1){
-  nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
+format_init.gauss_fit <- function(init, mu_terms, sig2_terms){
+  nb_mup <- length(attr(mu_terms, "term.labels"))+attr(mu_terms,"intercept")
   mu <- init[1:nb_mup]
   sig2 <- init[-(1:nb_mup)]
   list("mu"=mu, "sig2"=sig2)
@@ -107,11 +122,14 @@ gauss_fit <- function(y, data, mu_mod=~1, sig2_mod=~1, time_var, init=NULL){
   #     assign(y_name, y)
   #   }
   y_name <- check_y_name(y, y_name, data)
-  nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
+  mu_mat <- model.matrix(mu_mod, data)
+  sig2_mat <- model.matrix(sig2_mod, data)
+	mu_terms <- terms(mu_mod)
+	sig2_terms <- terms(sig2_mod)
 	gauss_lik <- function(init){
-    init_f <- format_init.gauss_fit(init, mu_mod, sig2_mod)
-    mu <- get_param(init_f$mu, mu_mod, data)
-  sig2 <- get_param(init_f$sig2, sig2_mod, data)
+    init_f <- format_init.gauss_fit(init, mu_terms, sig2_terms)
+    mu <- get_param(init_f$mu, mu_mat)
+  sig2 <- get_param(init_f$sig2, sig2_mat)
 		gauss_negll(y, mu, sig2) 
 	}
 	if(is.null(init)){
@@ -131,13 +149,17 @@ gauss_fit <- function(y, data, mu_mod=~1, sig2_mod=~1, time_var, init=NULL){
 	y_fit$data <- data
 	y_fit$mu_mod <- mu_mod
 	y_fit$sig2_mod <- sig2_mod
+	y_fit$mu_mat <- mu_mat
+	y_fit$sig2_mat <- sig2_mat
+	y_fit$mu_terms <- mu_terms
+	y_fit$sig2_terms <- sig2_terms
   y_fit$time_var <- time_var
 	attr(y_fit, "class")= "gauss_fit"
 	y_fit
 }
 
-format_init.gpd_fit <- function(init,  sig_mod){
-  nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
+format_init.gpd_fit <- function(init,  sig_terms){
+  nb_sigp <- length(attr(sig_terms, "term.labels"))+attr(sig_terms,"intercept")
   sig <- init[1:nb_sigp]
   xi <- init[-(1:nb_sigp)]
   list("sig"=sig, "xi"=xi)
@@ -177,6 +199,10 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
   #     assign(y_name, y)
   #   }
   y_name <- check_y_name(y, y_name, data)
+  mu_mat <- model.matrix(mu_mod, data)
+  sig_mat <- model.matrix(sig_mod, data)
+	mu_terms <- terms(mu_mod)
+	sig_terms <- terms(sig_mod)
   completed_formula <- complete_formula(y_name, mu_mod)
   rq_fitted <- rq(as.formula(completed_formula),data=data, tau=qthreshold)
 	threshold <- predict(rq_fitted)
@@ -188,8 +214,8 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
 		init <- init$par
 	}
 	gpd_lik <- function(init){
-    init_f <- format_init.gpd_fit(init,  sig_mod)
-    sig <- get_param(init_f$sig , sig_mod, data)
+    init_f <- format_init.gpd_fit(init,  sig_terms)
+    sig <- get_param(init_f$sig , sig_mat)
 		gpd_negll(y, threshold, sig, init_f$xi) 
 	}
 	y_fit=nlminb(start=init, gpd_lik) 
@@ -200,6 +226,10 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
 	y_fit$data <- data 
 	y_fit$mu_mod <- mu_mod
 	y_fit$sig_mod <- sig_mod
+	y_fit$mu_mat <- mu_mat
+	y_fit$sig_mat <- sig_mat
+	y_fit$mu_terms <- mu_terms
+	y_fit$sig_terms <- sig_terms
 	y_fit$qthreshold <- qthreshold
 	y_fit$rq_fitted <- rq_fitted 
 	y_fit$rate <- mean(y>threshold)
@@ -209,9 +239,9 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
 }
 	
 
-format_init.gev_fit <- function(init, mu_mod, sig_mod){
-  nb_mup <- length(attr(terms(mu_mod), "term.labels"))+attr(terms(mu_mod),"intercept")
-  nb_sigp <- length(attr(terms(sig_mod), "term.labels"))+attr(terms(sig_mod),"intercept")
+format_init.gev_fit <- function(init, mu_terms, sig_terms){
+  nb_mup <- length(attr(mu_terms, "term.labels")) + attr(mu_terms,"intercept")
+  nb_sigp <- length(attr(sig_terms, "term.labels")) + attr(sig_terms,"intercept")
   mu <- init[1:nb_mup]
   sig <- init[nb_mup + (1:nb_sigp)]
   xi <- init[-(1:(nb_sigp + nb_mup))]
@@ -251,6 +281,10 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
   #     assign(y_name, y)
   #   }
   y_name <- check_y_name(y, y_name, data)
+  mu_mat <- model.matrix(mu_mod, data)
+  sig_mat <- model.matrix(sig_mod, data)
+	mu_terms <- terms(mu_mod)
+	sig_terms <- terms(sig_mod)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
 		init  <- fevd(as.formula(paste(y_name, "~ 1")), data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE")$results
@@ -259,9 +293,9 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 		init <- init$par
 	}
 	gev_lik <- function(init){
-    init_f <- format_init.gev_fit(init, mu_mod, sig_mod)
-    mu <- get_param(init_f$mu, mu_mod, data)
-    sig <- get_param(init_f$sig, sig_mod, data)
+    init_f <- format_init.gev_fit(init, mu_terms, sig_terms)
+    mu <- get_param(init_f$mu, mu_mat)
+    sig <- get_param(init_f$sig, sig_mat)
 		gev_negll(y, mu, sig, init_f$xi) 
 	}
 	y_fit=nlminb(start=init, gev_lik)
@@ -273,6 +307,10 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 	y_fit$data <- data 
 	y_fit$mu_mod <- mu_mod
 	y_fit$sig_mod <- sig_mod
+	y_fit$mu_mat <- mu_mat
+	y_fit$sig_mat <- sig_mat
+	y_fit$mu_terms <- mu_terms
+	y_fit$sig_terms <- sig_terms
   y_fit$time_var <- time_var
 	y_fit
 }
@@ -335,23 +373,29 @@ compute_par <- function(object, newdata){
 #' @export
 compute_par.gpd_fit <- function(object, newdata){
   threshold <- predict(object$rq_fitted, newdata)
-  init_f <- format_init.gpd_fit(object$par,  object$sig_mod)
-  data.frame("threshold"=threshold, "sig"=get_param(init_f$sig , object$sig_mod, newdata), "xi"=init_f$xi)
+  init_f <- format_init.gpd_fit(object$par,  object$sig_terms)
+  ans <- cbind(threshold, get_param_formula(init_f$sig , object$sig_terms, newdata),init_f$xi)
+  colnames(ans) <- c("threshold", "sig", "xi")
+  ans
 }
 
 #' @describeIn compute_par returns the parameters of the fitted GEV at different times.
 #' @export
 compute_par.gev_fit <- function(object, newdata){
-  init_f <- format_init.gev_fit(object$par, object$mu_mod, object$sig_mod)
-  data.frame("mu"=get_param(init_f$mu, object$mu_mod, newdata), "sig"=get_param(init_f$sig, object$sig_mod, newdata), "xi"=init_f$xi)
+  init_f <- format_init.gev_fit(object$par, object$mu_terms, object$sig_terms)
+  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata),get_param_formula(init_f$sig, object$sig_terms, newdata), init_f$xi)
+  colnames(ans) <- c("mu", "sig", "xi")
+  ans
 }
 
 
 #' @describeIn compute_par returns the parameters of the fitted Gaussian at different times.
 #' @export
 compute_par.gauss_fit <- function(object, newdata){
-  init_f <- format_init.gauss_fit(object$par,  object$mu_mod, object$sig2_mod)
-  data.frame("mu"=get_param(init_f$mu, object$mu_mod, newdata), "sig2"=get_param(init_f$sig2, object$sig2_mod, newdata))
+  init_f <- format_init.gauss_fit(object$par,  object$mu_terms, object$sig2_terms)
+  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata), get_param_formula(init_f$sig2, object$sig2_terms, newdata))
+  colnames(ans) <- c("mu", "sig2") 
+  ans
 }
 
 #' Plot diagnostics for an gauss_fit object
@@ -372,8 +416,8 @@ compute_par.gauss_fit <- function(object, newdata){
 #' @export
 plot.gauss_fit <- function(x, ...){
 	param <- compute_par.gauss_fit(x, x$data)
-	mu <- param$mu
-	sig2 <- param$sig2
+	mu <- param[, 1]
+	sig2 <- param[, 2]
 	res <- x$y - mu
 	res_std <- res / sqrt(sig2)
 	par(mfrow=c(2,2))

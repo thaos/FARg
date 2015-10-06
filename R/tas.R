@@ -1,4 +1,4 @@
-#' European and global summer mean temperature anomalies from 1850 to 2100"
+#' European and global summer mean temperature anomalies from 1850 to 2100
 #'
 #' European and global summer temperature anomalies from 5 runs of the CNRM-CM5 climate models. Summer corresponds to the months JJA. Anomalies are computed from a climatology from 1961 to 1990. First part of the simulations are historical runs and afterwards the scenario RCP8.5 is used.
 #' 

@@ -22,8 +22,8 @@
 #'xp <- 1.6
 #'pnt1 <- set_pnt(t1, xp, time_var="year", tas)
 #'pnt0 <- set_pnt(t0, xp, time_var="year", tas)
-#'get_far(y_std, y_std_fit, pnt0, pnt1)
-#'boot_ic(y_std,  y_std_fit, xp, t0, t1)
+#'get_far(y_std, y_std_fit, pnt0, pnt1, under_threshold=TRUE)
+#'boot_ic(y_std,  y_std_fit, xp, t0, t1, under_threshold=TRUE)
 #' @export
 standardize <- function(y, data, mu_mod=~1, sig2_mod=~1){
   stopifnot(!is.null(data))
@@ -36,6 +36,8 @@ standardize <- function(y, data, mu_mod=~1, sig2_mod=~1){
   #     assign(y_name, y)
   #   }
   y_name <- check_y_name(y, y_name, data)
+	mu_terms <- terms(mu_mod)
+	sig2_terms <- terms(sig2_mod)
   y_fit <- lm.fit(x=model.matrix(mu_mod, data=data), y=get(y_name))
   r2 <- residuals(y_fit)^2
   r2_fit  <- lm.fit(x=model.matrix(sig2_mod, data=data), y=r2)
@@ -47,6 +49,8 @@ standardize <- function(y, data, mu_mod=~1, sig2_mod=~1){
               "data"=data,
               "mu_mod"=mu_mod, 
               "sig2_mod"=sig2_mod,
+              "mu_terms"=mu_terms, 
+              "sig2_terms"=sig2_terms,
               "mu_fit"=y_fit,
               "sig2_fit"=r2_fit)
   class(res) <- "trans"
@@ -63,8 +67,8 @@ transform_newdat.std <- function(y_trans, y, newdata, ...){
   sig2_mod <- y_trans$sig2_mod
   mu_fit <- y_trans$mu_fit
   sig2_fit <- y_trans$sig2_fit
-  x_mu <- model.matrix(mu_mod, data=newdata)
-  x_sig2 <- model.matrix(sig2_mod, data=newdata)
+  x_mu <- get_mod_mat(y_trans$mu_terms, data=newdata)
+  x_sig2 <- get_mod_mat(y_trans$sig2_terms, data=newdata)
   mu <- x_mu %*% coefficients(mu_fit)
   sig2 <- x_sig2 %*% coefficients(sig2_fit)
   y_std <- (y - mu) / sqrt(sig2)
@@ -91,7 +95,7 @@ transform_newdat.std <- function(y_trans, y, newdata, ...){
 #'y_std_fit <- gpd_fit(y_std$y_std ,  data=tas, time_var="year", qthreshold=0.8)
 #'pnt1_std <- transform_pnt(y_std, pnt1)
 #'pnt0_std <- transform_pnt(y_std, pnt0)
-#'get_far(y_std_fit, pnt0_std, pnt1_std)
+#'get_far(y_std_fit, pnt0_std, pnt1_std, under_threshold=TRUE)
 #'
 #'eur_tas_positive <- with(tas, eur_tas + abs(min(eur_tas)) +1)
 #'y_bc <- bc_fit(l_lambda=seq(-1, 1, 0.02), y=eur_tas_positive, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year", to_plot=TRUE)
