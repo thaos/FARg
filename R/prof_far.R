@@ -46,7 +46,7 @@ prof_ic=function(y_fit, xp, t0, t1, ci_p=0.95 ,to_plot=FALSE, ...){
   p0p1 <- 1 - far[1]
   print("--- FAR -----")
   print(far)
-  fit_check <- optimize_constr(y_fit, pnt0, pnt1, p0p1)
+  fit_check <- optimize_constr(y_fit, optimize_far_prof, pnt0, pnt1, p0p1)
   if(!isTRUE(all.equal(fit_check$value, overall_max))){
     message("Slightly different results with constrained optimization")
     print(fit_check$value)
@@ -62,11 +62,7 @@ prof_ic=function(y_fit, xp, t0, t1, ci_p=0.95 ,to_plot=FALSE, ...){
   aalpha <- qchisq(ci_p, 1)
   f_roots <- function(ratio){
     print(ratio)
-    #     Rprof(tmp <- tempfile(), line.profiling=TRUE)
-    parmax  <-  -profil_optim(y_fit, pnt0, pnt1, R=ratio)
-    #     Rprof()
-    #     print(summaryRprof(tmp))
-    #     browser()
+    parmax  <-  -profil_optim(y_fit, optimize_far_prof, pnt0, pnt1, R=ratio)
     parmax + aalpha/2 + overall_max 
   }
   print("BORNE INF-------------------------------------------")
@@ -76,28 +72,32 @@ prof_ic=function(y_fit, xp, t0, t1, ci_p=0.95 ,to_plot=FALSE, ...){
     ic_sup <- bsup_time(c(p0p1,1.1),fun=f_roots,nbdiv=2,xmax=p0p1,fmax=aalpha/2)
   else
     ic_sup <- bsup_time(c(p0p1 ,p0p1*2), fun=f_roots, nbdiv=2, xmax=p0p1, fmax=aalpha/2)
+  ci <- select_prof_ic(ic_inf, ic_sup, aalpha, to_plot=to_plot)
+  out  <- c(ci[1], far[1], ci[2],far[-1])
+  names(out)[c(1,3)] <- c("IC_inf", "IC_sup")
+  # out  <- c(min(ci),get_far()[1],max(ci),get_far()[-1])
+  out
+}
+
+select_prof_ic <- function(ic_inf, ic_sup, aalpha, to_plot=FALSE){
   ratio_l <- c(ic_inf$x, ic_sup$x)
   parmax <- c(ic_inf$likel ,ic_sup$likel)
   if(abs(max(parmax)-aalpha/2)>0.0001){
-    print("non equal mle")
+    warning("non equal mle")
     print(max(parmax))
     print(aalpha/2)
   }
-  crit <- aalpha/2 - qchisq(0.999, 1)/2
+  crit <- aalpha/2 - qchisq(max(1-aalpha,0.999), 1)/2
   cond <- parmax > crit
   ratio_l <- ratio_l[cond]
   parmax <- parmax[cond]
   if(to_plot){
-    smth <- spline(ratio_l[cond], parmax[cond], n = 500,method="natural")
+    smth <- spline(ratio_l, parmax, n = 500,method="natural")
     plot(ratio_l, parmax, type = "l", xlab = "", ylab = "")
     abline(h = 0, lty = 2, col = 2)
     lines(smth$x,smth$y, lty = 2, col = 2)
   }
   ci <- ratio_l[parmax > 0]
   stopifnot(length(ci)>1)
-  out  <- c(1-max(ci), far[1], 1-min(ci),far[-1])
-  names(out)[c(1,3)] <- c("IC_inf", "IC_sup")
-  # out  <- c(min(ci),get_far()[1],max(ci),get_far()[-1])
-  out
+  ci  <- c(1-max(ci), 1-min(ci))
 }
-
