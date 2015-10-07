@@ -1,5 +1,17 @@
 #' @importFrom alabama auglag
 
+constrain_p <- function(y_fit, pnt, P, ...){
+	res=function(par){
+		tc=try({
+			y_fit$par <- par
+			p <- get_p(y_fit, pnt, ...)[1]
+		},silent=TRUE)
+		if(class(tc)=="try-error" )return(10^6)
+    abs(p-P)
+	}
+	res
+}
+
 constrain_far <- function(y_fit, pnt0, pnt1, R=0.5, ...){
 	res=function(par){
 		tc=try({
@@ -8,7 +20,7 @@ constrain_far <- function(y_fit, pnt0, pnt1, R=0.5, ...){
 			ratio <- 1 - far[1]
 		},silent=TRUE)
 		if(class(tc)=="try-error" )return(10^6)
-		ratio-R	
+		abs(ratio-R)	
 	}
 	res
 }
@@ -44,6 +56,10 @@ fit2lik.gauss_fit <- function(y_fit){
 }
 
 
+optimize_p_prof <- function(y_fit, pnt, P){
+	ans <- auglag(par=y_fit$par, fn=fit2lik(y_fit), heq=constrain_p(y_fit, pnt, P=P), control.outer=list(method="nlminb",trace=FALSE))
+}
+
 optimize_far_prof <- function(y_fit, pnt0, pnt1, R){
 	ans <- auglag(par=y_fit$par, fn=fit2lik(y_fit), heq=constrain_far(y_fit, pnt0, pnt1, R=R), control.outer=list(method="nlminb",trace=FALSE))
 }
@@ -64,7 +80,7 @@ profil_optim <- function(y_fit, optim_profil, ...){
 optimize_constr <- function(y_fit, optim_profil, ...){
 	fit <- tryCatch(expr=optim_profil(y_fit, ...), 
                   error=function(e){
-                    print("Cant optimize properly for this value of the ratio p0/p1")
+                    print("Cant optimize properly for this value")
                     return(10^6)
                   })
 }

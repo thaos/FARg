@@ -23,7 +23,7 @@
 #'pnt1 <- set_pnt(t1, xp, time_var="year", tas)
 #'pnt0 <- set_pnt(t0, xp, time_var="year", tas)
 #'get_far(y_std, y_std_fit, pnt0, pnt1, under_threshold=TRUE)
-#'boot_ic(y_std,  y_std_fit, xp, t0, t1, under_threshold=TRUE)
+#'boot_far(y_std,  y_std_fit, xp, t0, t1, under_threshold=TRUE)
 #' @export
 standardize <- function(y, data, mu_mod=~1, sig2_mod=~1){
   stopifnot(!is.null(data))

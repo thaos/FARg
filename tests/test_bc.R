@@ -62,8 +62,9 @@ get_far(y_bc, y_bc_fit, pnt0, pnt1, under_threshold=TRUE)
 # bf_bc <- boot_func.bc_fit(y_bc, y_bc_fit, indices=1:length(y), pnt0, pnt1)
 # sb_bc <- simple_boot(y_bc_fit, boot_func.bc_fit, y_trans=y_bc, pnt0=pnt0, pnt1=pnt1)
 
-# bic_bc <- boot_ic.trans(y_bc,  y_bc_fit, xp, t0, t1)
-bic_bc <- boot_ic(y_bc,  y_bc_fit, xp, t0, t1, under_threshold=TRUE)
+# bic_bc <- boot_far.trans(y_bc,  y_bc_fit, xp, t0, t1)
+bic_bc <- boot_far(y_bc,  y_bc_fit, xp, t0, t1, under_threshold=TRUE)
+bic_bc <- boot_p(y_bc,  y_bc_fit, xp, t0, under_threshold=TRUE)
 
 
 # y_std <- standardize(y, data=NULL, mu_mod=~covariate, sig2_mod=~covariate)
@@ -86,8 +87,9 @@ get_far(y_std, y_std_fit, pnt0, pnt1, under_threshold=TRUE)
 # sb_std <- simple_boot(y_std_fit, boot_func.std, y_trans=y_std, pnt0=pnt0, pnt1=pnt1)
 
 print(system.time({
-  #   bic_std <- boot_ic.trans(y_std,  y_std_fit, xp, t0, t1)
-  bic_std <- boot_ic(y_std,  y_std_fit, xp, t0, t1, under_threshold=TRUE)
+  #   bic_std <- boot_far.trans(y_std,  y_std_fit, xp, t0, t1)
+  bic_std <- boot_far(y_std,  y_std_fit, xp, t0, t1, under_threshold=TRUE)
+  bic_std <- boot_p(y_std,  y_std_fit, xp, t0, under_threshold=TRUE)
 }))
 
 # muscsh=findpars(y_trans.fit)
