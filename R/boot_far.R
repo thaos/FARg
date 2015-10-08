@@ -87,6 +87,7 @@ boot_far.default <- function(object, xp, t0, t1, ci_p=0.95, use_init=TRUE, R=250
 #'b_gpd <- boot_p(gp_fit, xp, t0, ci_p=0.95, under_threshold=TRUE)
 #'b_gev <- boot_p(ge_fit, xp, t0, ci_p=0.95)
 #'b_gauss <- boot_p(ga_fit, xp, t0, ci_p=0.95)
+#' @export
 boot_p <- function(object, ...){
   UseMethod("boot_p")
 }
@@ -95,7 +96,7 @@ boot_p <- function(object, ...){
 #' @export
 boot_p.default <- function(object, xp, t, ci_p=0.95, use_init=TRUE, R=250, ...){
   pnt <- set_pnt(t, xp, time_var=object$time_var, object$data)
-  p_mle <- get_p(object, pnt0, pnt1, ...)
+  p_mle <- get_p(object, pnt, ...)
   #   log <- capture.output({
     #     boot_res=boot(data=object, statistic=boot_func, R=250,  pnt0=pnt0, pnt1=pnt1, use_init=use_init, parallel="snow")
     boot_res=simple_boot(object, statistic=boot_fun, R=R, get_fun=get_p, pnt=pnt, use_init=use_init, ...)

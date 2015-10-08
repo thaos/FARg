@@ -10,8 +10,9 @@ set_fparam <- function(f, gfit){
 }
 
 #' @rdname get_far 
+#' @param y_fit an object of class gauss_fit, gev_fit or gpd_fit. Only needed if the argument object if of class trans 
 #' @export
-get_far.trans <- function(object, y_fit, pnt0, pnt1, qthreshold=NULL, ...){
+get_far.trans <- function(object, y_fit, pnt0, pnt1, ...){
   pnt1_trans <- transform_pnt(object, pnt1)
   pnt0_trans <- transform_pnt(object, pnt0)
   far <- get_far(y_fit, pnt0_trans, pnt1_trans, ...)
@@ -19,8 +20,9 @@ get_far.trans <- function(object, y_fit, pnt0, pnt1, qthreshold=NULL, ...){
 }
 
 #' @rdname get_p 
+#' @param y_fit an object of class gauss_fit, gev_fit or gpd_fit. Only needed if the argument object if of class trans 
 #' @export
-get_p.trans <- function(object, y_fit, pnt, qthreshold=NULL, ...){
+get_p.trans <- function(object, y_fit, pnt, ...){
   pnt_trans <- transform_pnt(object, pnt)
   p <- get_p(y_fit, pnt_trans, ...)
   p

@@ -8,10 +8,8 @@ NULL
 #' 
 #' Compute the Fraction of Attributable Risk, which compares the probabilities p0 and p1 of exeeding a threshold xp at two differents time (t0 and t1) of the times series : \eqn{FAR = 1 - p0/p1}. 
 #' @param object an object of class gauss_fit, gev_fit, gpd_fit or of class trans. If object is of class trans, the argument y_fit must be passed.
-#' @param y_fit an object of class gauss_fit, gev_fit or gpd_fit. Only needed if the argument object if of class trans 
 #' @param pnt0 point at time t0. A point is defined by a time, a threshold xp and values of covariates used for the fit.
 #' @param pnt1 point at time t1. A point is defined by a time, a threshold xp and values of covariates used for the fit.
-#' @param qthreshold, the level of threshold used in the quantile regression to define the GPD threshold. Only use for class gpd_fit object.
 #' @param under_threshold used for gpd_fit. It tells whether it provides an estimated when one of points is under the GPD threshold. In which case, gives the empirical probability obtained by quantile regression.
 #' @param ... Arguments to be passed to methods,
 #' @return a vector with the estimated confidence intervals for the far as well as the probability of exceeding the threshold xp and the models parameters a both time t0 and t1.
@@ -44,7 +42,7 @@ get_far <- function(object, ...){
 #' get_p generic.
 #'
 #' Compute the probability of exeeding a given point.
-#' @param y_fit an object of class gauss_fit, gev_fit, gpd_fit.
+#' @param object an object of class gauss_fit, gev_fit, gpd_fit.
 #' @param pnt a point which consists of a line of data.frame containing the same variables used for the fit. It can bet set using the function \code{set_pnt}
 #' @param under_threshold used for gpd_fit. It tells whether it provides an estimated when the point is under the GPD threshold. In which case, gives the empirical probability obtained by quantile regression.
 #' @param ... Arguments to be passed to methods,
@@ -70,14 +68,14 @@ get_far <- function(object, ...){
 #'get_p(ge_fit, pnt1)
 #'get_far(ge_fit, pnt0, pnt1)
 #' @export
-get_p <- function(y_fit, pnt, ...){
+get_p <- function(object, ...){
 	UseMethod("get_p")
 }
 
 #' @describeIn get_p for a gaussian fit.
 #' @export
-get_p.gauss_fit <- function(y_fit, pnt, ...){
-  par <- compute_par.gauss_fit(y_fit, newdata=pnt[, -1])
+get_p.gauss_fit <- function(object, pnt, ...){
+  par <- compute_par.gauss_fit(object, newdata=pnt[, -1])
 	res <- pnorm(pnt$y, mean=par[, 1], sd=sqrt(par[, 2]), lower.tail=FALSE)
 	res <- c(res, par[, 1], par[, 2])
 	names(res)=c("p","mu","sigma2")
@@ -86,22 +84,22 @@ get_p.gauss_fit <- function(y_fit, pnt, ...){
 
 #' @describeIn get_p for a GPD fit.
 #' @export
-get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
+get_p.gpd_fit <- function(object, pnt, under_threshold=FALSE, ...){
   y_cord <- pnt$y
-	threshold <- predict(y_fit$rq_fitted, newdata=pnt[, -1])
+	threshold <- predict(object$rq_fitted, newdata=pnt[, -1])
 	stopifnot(under_threshold | y_cord >= threshold)
   # A remplacer !!!
-  par <- compute_par.gpd_fit(y_fit, newdata=pnt[, -1])
-	phi <- y_fit$rate
+  par <- compute_par.gpd_fit(object, newdata=pnt[, -1])
+	phi <- object$rate
 	if (y_cord > threshold)
 		res <- pevd(y_cord, threshold=threshold, scale=par[, 2], shape=par[, 3], type="GP", lower.tail=FALSE) * phi
 	else {
-		findP <- function(par, pnt, y_fit){
-      rq_fitted <- rq(as.formula(complete_formula(y_fit$y, y_fit$mu_mod)), data=y_fit$data, tau=par)
+		findP <- function(par, pnt, object){
+      rq_fitted <- rq(as.formula(complete_formula(object$y, object$mu_mod)), data=object$data, tau=par)
     predicted <- predict.rq(rq_fitted, newdata=pnt[, -1])
 			abs(y_cord-predicted)
 		}
-		res <- optimize(findP, interval=c(0,1-phi), pnt=pnt, y_fit=y_fit, tol=0.001)
+		res <- optimize(findP, interval=c(0,1-phi), pnt=pnt, object=object, tol=0.001)
 		res <- res$minimum
 		res <- 1-res
 	}		
@@ -112,8 +110,8 @@ get_p.gpd_fit <- function(y_fit, pnt, under_threshold=FALSE, ...){
 
 #' @describeIn get_p for a GEV fit.
 #' @export
-get_p.gev_fit <- function(y_fit, pnt, ...){
-  par <- compute_par.gev_fit(y_fit, newdata=pnt[, -1])
+get_p.gev_fit <- function(object, pnt, ...){
+  par <- compute_par.gev_fit(object, newdata=pnt[, -1])
 	res <- pevd(pnt$y, loc=par[, 1], scale=par[, 2], shape=par[, 3] ,lower.tail=FALSE)
 	res <- c(res, par[, 1], par[ ,2], par[, 3])
 	names(res) <- c("p","mu","sigma","shape")
