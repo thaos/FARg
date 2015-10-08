@@ -39,7 +39,7 @@ get_mod_mat <- function(mod_terms, data){
   terms_int <- attr(mod_terms,"intercept")
   ans <- matrix(1,nrow=nrow(data),ncol=length(terms_lab)+terms_int)
   if(length(terms_lab) > 0)
-  ans[,(ncol(ans)-length(terms_lab)+1) : ncol(ans)] <- data[, terms_lab]
+  ans[,(ncol(ans)-length(terms_lab)+1) : ncol(ans)] <- as.matrix(data[, terms_lab])
   ans
   #   model.matrix(mod, data)
 }
@@ -100,7 +100,7 @@ format_init.gauss_fit <- function(init, mu_terms, sig2_terms){
 #' @param sig2_mod a formula defining the covariates the variance parameter of the gaussian depends linearly on.
 #' @param time_var a variable used to define the time in the time serie. It can also be a string giving the variable name.
 #' @param init vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using one iteration of feasible GLS.
-#' @return returns an object of class gauss_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gauss_fit 
+#' @return returns an object of class gauss_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gauss_fit are also returned in the list.
 #' @examples
 #'data(tas)
 #' #Example with the same covariate for the mean and variance parameter
