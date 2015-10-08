@@ -71,6 +71,7 @@ prof_far=function(y_fit, xp, t0, t1, ci_p=0.95 ,to_plot=FALSE, ...){
   else
     ic_sup <- bsup_time(c(p0p1 ,p0p1*2), fun=f_roots, nbdiv=2, xmax=p0p1, fmax=aalpha/2)
   ci <- select_prof_ic(ic_inf, ic_sup, ci_p, to_plot=to_plot)
+  ci <- sort(1 - ci)
   out  <- c(ci[1], far[1], ci[2],far[-1])
   names(out)[c(1,3)] <- c("IC_inf", "IC_sup")
   # out  <- c(min(ci),get_far()[1],max(ci),get_far()[-1])
@@ -165,5 +166,5 @@ select_prof_ic <- function(ic_inf, ic_sup, ci_p, to_plot=FALSE){
   }
   ci <- ratio_l[parmax > 0]
   stopifnot(length(ci)>1)
-  ci  <- c(1-max(ci), 1-min(ci))
+  ci  <- c(min(ci), max(ci))
 }
