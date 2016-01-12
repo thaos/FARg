@@ -49,7 +49,7 @@ lambda_prof <- function(lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, init=
 #' @examples
 #'data(tas)
 #'eur_tas_positive <- with(tas, eur_tas + abs(min(eur_tas)) +1)
-#'y_bc <- bc_fit(l_lambda=seq(-1, 1, 0.02), y=eur_tas_positive, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year", to_plot=TRUE)
+#'y_bc <- bc_fit(l_lambda=seq(-1, 1, 0.02), y=eur_tas_positive, data=tas, mu_mod=~gbl_tas, sig2_mod=~gbl_tas, time_var="year", to_plot=TRUE)
 #'y_bc_fit <- gpd_fit(y_bc$y_std ,  data=tas, time_var="year", qthreshold=0.8)
 #'t1 <- 2003
 #'t0 <- 1990

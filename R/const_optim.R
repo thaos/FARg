@@ -48,10 +48,10 @@ fit2lik.gev_fit <- function(y_fit, pnt0, pnt1, R){
 
 fit2lik.gauss_fit <- function(y_fit){
 	gauss_lik <- function(init){
-      init_f <- format_init.gauss_fit(init, y_fit$mu_terms, y_fit$sig2_terms)
+      init_f <- format_init.gauss_fit(init, y_fit$mu_terms, y_fit$sig_terms)
       mu <- get_param(init_f$mu, y_fit$mu_mat)
-      sig2 <- get_param(init_f$sig2, y_fit$sig2_mat)
-      gauss_negll(y_fit$y, mu, sig2) 
+      sig <- get_param(init_f$sig, y_fit$sig_mat)
+      gauss_negll(y_fit$y, mu, sig) 
 	}
 }
 

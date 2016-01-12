@@ -6,7 +6,7 @@
 #' \itemize{
 #'   \item year. year of the anomalies
 #'   \item eur_tas. European summer temperature anomalies (K) 
-#'   \item avg_gbl_tas. Global summer temperature anomalies (K) 
+#'   \item gbl_tas. Global summer temperature anomalies (K) 
 #' }
 #'
 #' @format A data frame with 1255 rows and 333 variables

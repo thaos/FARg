@@ -25,9 +25,9 @@ simple_boot <- function(y_fit, statistic, R=250, seed_init=NULL, ...){
 #' @examples
 #'data(tas)
 #'
-#'ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
-#'gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
-#'ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+#'ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
+#'gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year", qthreshold=0.9)
+#'ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 #'
 #'t1 <- 2003
 #'t0 <- 1990
@@ -52,6 +52,7 @@ boot_far.default <- function(object, xp, t0, t1, ci_p=0.95, use_init=TRUE, R=250
     #     boot_res=boot(data=object, statistic=boot_func, R=250,  pnt0=pnt0, pnt1=pnt1, use_init=use_init, parallel="snow")
     boot_res=simple_boot(object, statistic=boot_fun, R=R, get_fun=get_far, pnt0=pnt0, pnt1=pnt1, use_init=use_init, ...)
   #   })
+  a=as.data.frame(t(boot_res))
   alpha <- 1-ci_p
   far_boot <- boot_res[1,]
   ic_boot <- quantile(far_boot,p=c(alpha/2, 0.5, 1-alpha/2))
@@ -76,9 +77,9 @@ boot_far.default <- function(object, xp, t0, t1, ci_p=0.95, use_init=TRUE, R=250
 #' @examples
 #'data(tas)
 #'
-#'ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
-#'gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
-#'ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+#'ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
+#'gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year", qthreshold=0.9)
+#'ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 #'
 #'t1 <- 2003
 #'t0 <- 1990
@@ -142,6 +143,6 @@ boot_sample.gauss_fit <- function(object, indices, pnt0, pnt1, use_init=TRUE, ..
   init <- NULL
   if(use_init) init <- object$par
   bdat <- object$data[indices,]
-  b_fit <- gauss_fit(object$y[indices], bdat, object$mu_mod, object$sig2_mod, object$time_var, init)
+  b_fit <- gauss_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$time_var, init)
 }
 

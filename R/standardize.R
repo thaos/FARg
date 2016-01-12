@@ -15,7 +15,7 @@
 #'}
 #' @examples
 #'data(tas)
-#'y_std <- standardize(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas)
+#'y_std <- standardize(eur_tas, data=tas, mu_mod=~gbl_tas, sig2_mod=~gbl_tas)
 #'y_std_fit <- gpd_fit(y_std$y_std ,  data=tas, time_var="year", qthreshold=0.8)
 #'t1 <- 2003
 #'t0 <- 1990
@@ -91,14 +91,14 @@ transform_newdat.std <- function(y_trans, y, newdata, ...){
 #'xp <- 1.6
 #'pnt1 <- set_pnt(t1, xp, time_var="year", tas)
 #'pnt0 <- set_pnt(t0, xp, time_var="year", tas)
-#'y_std <- standardize(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas)
+#'y_std <- standardize(eur_tas, data=tas, mu_mod=~gbl_tas, sig2_mod=~gbl_tas)
 #'y_std_fit <- gpd_fit(y_std$y_std ,  data=tas, time_var="year", qthreshold=0.8)
 #'pnt1_std <- transform_pnt(y_std, pnt1)
 #'pnt0_std <- transform_pnt(y_std, pnt0)
 #'get_far(y_std_fit, pnt0_std, pnt1_std, under_threshold=TRUE)
 #'
 #'eur_tas_positive <- with(tas, eur_tas + abs(min(eur_tas)) +1)
-#'y_bc <- bc_fit(l_lambda=seq(-1, 1, 0.02), y=eur_tas_positive, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year", to_plot=TRUE)
+#'y_bc <- bc_fit(l_lambda=seq(-1, 1, 0.02), y=eur_tas_positive, data=tas, mu_mod=~gbl_tas, sig2_mod=~gbl_tas, time_var="year", to_plot=TRUE)
 #'y_bc_fit <- gpd_fit(y_bc$y_std ,  data=tas, time_var="year", qthreshold=0.8)
 #'pnt1_bc <- transform_pnt(y_bc, pnt1)
 #'pnt0_bc <- transform_pnt(y_bc, pnt0)

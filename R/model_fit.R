@@ -62,10 +62,10 @@ complete_formula <- function(y, uncomplete_f){
 }
 
 
-gauss_negll <- function(y, mu, sig2){
+gauss_negll <- function(y, mu, sig){
   n <- length(y)
-  stopifnot(length(mu) == n & length(sig2) == n)
-	negll <- -0.5*(-n*log(2*pi)-sum(log(sig2)) - sum((y-mu)^2/sig2))
+  stopifnot(length(mu) == n & length(sig) == n)
+	negll <- -0.5*(-n*log(2*pi)-sum(log(sig)) - sum((y-mu)^2/sig))
 	if(is.na(negll)) negll <- 10^6
 	negll
 }
@@ -82,11 +82,11 @@ gev_negll <- function(y, mu, sig, xi){
 	levd(x=y, location=mu, scale=sig, shape=xi, type="GEV")
 }
 
-format_init.gauss_fit <- function(init, mu_terms, sig2_terms){
+format_init.gauss_fit <- function(init, mu_terms, sig_terms){
   nb_mup <- length(attr(mu_terms, "term.labels"))+attr(mu_terms,"intercept")
   mu <- init[1:nb_mup]
-  sig2 <- init[-(1:nb_mup)]
-  list("mu"=mu, "sig2"=sig2)
+  sig <- init[-(1:nb_mup)]
+  list("mu"=mu, "sig"=sig)
 }
 
 #' Fit a time serie as independent gaussians.
@@ -95,22 +95,22 @@ format_init.gauss_fit <- function(init, mu_terms, sig2_terms){
 #'
 #' MLE fit of a time serie y as independant gaussians where the mean and the variance depend linearly on a set of covariates. The optimization of the negative log-likelihood is done with the nlminb function in R. 
 #' @param y the time serie to be fitted.
-#' @param data a data.frame object with  where the function looks first for the variables y, time_var and the covariates specified in the mu_mod and sig2_mod arguments.
+#' @param data a data.frame object with  where the function looks first for the variables y, time_var and the covariates specified in the mu_mod and sig_mod arguments.
 #' @param mu_mod a formula defining the covariates the mean parameter of the gaussian depends linearly on.
-#' @param sig2_mod a formula defining the covariates the variance parameter of the gaussian depends linearly on.
+#' @param sig_mod a formula defining the covariates of the standard deviation parameter of the gaussian depends linearly on.
 #' @param time_var a variable used to define the time in the time serie. It can also be a string giving the variable name.
 #' @param init vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using one iteration of feasible GLS.
 #' @return returns an object of class gauss_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gauss_fit are also returned in the list.
 #' @examples
 #'data(tas)
 #' #Example with the same covariate for the mean and variance parameter
-#'ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+#'ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 #' # get the values of the mean and variance parameters of the gaussian at each time
 #'compute_par(ga_fit, tas)
 #' # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
 #'plot(ga_fit)
 #' @export
-gauss_fit <- function(y, data, mu_mod=~1, sig2_mod=~1, time_var, init=NULL){
+gauss_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
   stopifnot(exist_time_var(time_var, data))
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
@@ -123,19 +123,19 @@ gauss_fit <- function(y, data, mu_mod=~1, sig2_mod=~1, time_var, init=NULL){
   #   }
   y_name <- check_y_name(y, y_name, data)
   mu_mat <- model.matrix(mu_mod, data)
-  sig2_mat <- model.matrix(sig2_mod, data)
+  sig_mat <- model.matrix(sig_mod, data)
 	mu_terms <- terms(mu_mod)
-	sig2_terms <- terms(sig2_mod)
+	sig_terms <- terms(sig_mod)
 	gauss_lik <- function(init){
-    init_f <- format_init.gauss_fit(init, mu_terms, sig2_terms)
+    init_f <- format_init.gauss_fit(init, mu_terms, sig_terms)
     mu <- get_param(init_f$mu, mu_mat)
-  sig2 <- get_param(init_f$sig2, sig2_mat)
-		gauss_negll(y, mu, sig2) 
+  sig <- get_param(init_f$sig, sig_mat)
+		gauss_negll(y, mu, sig) 
 	}
 	if(is.null(init)){
 		y_fit <- lm.fit(x=model.matrix(mu_mod, data=data), y=y)
 		fit_res2 <- residuals(y_fit)^2
-		var_fit  <- lm.fit(x=model.matrix(sig2_mod, data=data), y=fit_res2)
+		var_fit  <- lm.fit(x=model.matrix(sig_mod, data=data), y=fit_res2)
 		init <- c(coefficients(y_fit), coefficients(var_fit))
 		print("--- Parameters Initialization -----")
     print(paste("neg-likelihood =", gauss_lik(init)))
@@ -148,11 +148,11 @@ gauss_fit <- function(y, data, mu_mod=~1, sig2_mod=~1, time_var, init=NULL){
   y_fit$y <- y
 	y_fit$data <- data
 	y_fit$mu_mod <- mu_mod
-	y_fit$sig2_mod <- sig2_mod
+	y_fit$sig_mod <- sig_mod
 	y_fit$mu_mat <- mu_mat
-	y_fit$sig2_mat <- sig2_mat
+	y_fit$sig_mat <- sig_mat
 	y_fit$mu_terms <- mu_terms
-	y_fit$sig2_terms <- sig2_terms
+	y_fit$sig_terms <- sig_terms
   y_fit$time_var <- time_var
 	attr(y_fit, "class")= "gauss_fit"
 	y_fit
@@ -177,11 +177,11 @@ format_init.gpd_fit <- function(init,  sig_terms){
 #' @param time_var a variable used to define the time in the time serie. It can also be a string giving the variable name.
 #' @param init vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using the function fevd from the extRemes packages.
 #' @param qthreshold the level of quantile used to set the GPD threshold.
-#' @return returns an object of class gpd_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gpd_fit. 
+#' @return returns an object of class gpd_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gpd_fit are included in the list as well. 
 #' @examples
 #'data(tas)
 #' #Example with the same covariate for the mean and variance parameter
-#' gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
+#' gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year", qthreshold=0.9)
 #' # get the values of the mean and variance parameters of the GPD at each time
 #'compute_par(gp_fit, tas)
 #' # plot diagnostic plot of the fit : qqplot, density of fitted vs theorical density, times series ans return levels
@@ -259,11 +259,11 @@ format_init.gev_fit <- function(init, mu_terms, sig_terms){
 #' @param sig_mod a formula defining the covariates the scale parameter of the GEV depends linearly on.
 #' @param time_var a variable used to define the time in the time serie. It can also be a string giving the variable name.
 #' @param init vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using the function fevd from the extRemes packages.
-#' @return returns an object of class gev_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gev_fit. 
+#' @return returns an object of class gev_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gev_fit are included in the list as well. 
 #' @examples
 #'data(tas)
 #' #Example with the same covariate for the mean and variance parameter
-#' ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
+#' ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 #' # get the values of the mean and variance parameters of the GEV at each time
 #'compute_par(ge_fit, tas)
 #' # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
@@ -325,7 +325,7 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 #' @examples
 #'data(tas)
 #' #Example with the same covariate for the mean and variance parameter
-#' ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
+#' ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 #' # get the values of the mean and variance parameters of the GEV at each time
 #'compute_par(ge_fit, tas)
 #' # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
@@ -347,7 +347,7 @@ plot.gev_fit <- function(x, ...){
 #' @examples
 #'data(tas)
 #' #Example with the same covariate for the mean and variance parameter
-#' gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
+#' gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year", qthreshold=0.9)
 #' # get the values of the mean and variance parameters of the GEV at each time
 #'compute_par(gp_fit, tas)
 #' # plot diagnostic plot of the fit : qqplot, density of fitted vs theorical density, times series ans return levels
@@ -392,9 +392,9 @@ compute_par.gev_fit <- function(object, newdata){
 #' @describeIn compute_par returns the parameters of the fitted Gaussian at different times.
 #' @export
 compute_par.gauss_fit <- function(object, newdata){
-  init_f <- format_init.gauss_fit(object$par,  object$mu_terms, object$sig2_terms)
-  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata), get_param_formula(init_f$sig2, object$sig2_terms, newdata))
-  colnames(ans) <- c("mu", "sig2") 
+  init_f <- format_init.gauss_fit(object$par,  object$mu_terms, object$sig_terms)
+  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata), get_param_formula(init_f$sig, object$sig_terms, newdata))
+  colnames(ans) <- c("mu", "sig") 
   ans
 }
 
@@ -408,7 +408,7 @@ compute_par.gauss_fit <- function(object, newdata){
 #' @examples
 #'data(tas)
 #' #Example with the same covariate for the mean and variance parameter
-#' ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+#' ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 #' # get the values of the mean and variance parameters of the gaussian at each time
 #'compute_par(ga_fit, tas)
 #' # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
@@ -417,9 +417,9 @@ compute_par.gauss_fit <- function(object, newdata){
 plot.gauss_fit <- function(x, ...){
 	param <- compute_par.gauss_fit(x, x$data)
 	mu <- param[, 1]
-	sig2 <- param[, 2]
+	sig <- param[, 2]
 	res <- x$y - mu
-	res_std <- res / sqrt(sig2)
+	res_std <- res / sig
 	par(mfrow=c(2,2))
 	plot(mu, res_std, main="Standardized Residuals vs Fitted", xlab="Fitted", ylab="Standardized Residuals")
 	abline(h=0, ,col="blue")
@@ -429,7 +429,7 @@ plot.gauss_fit <- function(x, ...){
 	lines(dens$x, dnorm(x=dens$x), col="blue", lty=2)
 	plot(x$y, type="l")
 	p=1-c(0.5, 0.05, 0.01)
-	qXX=mapply(qnorm, mean=mu, sd=sqrt(sig2), MoreArgs=list(p=p))
+	qXX=mapply(qnorm, mean=mu, sd=sig, MoreArgs=list(p=p))
 	for(i in seq_along(p)){
 		    lines(qXX[i,], col=i+1)
 	}
@@ -442,11 +442,11 @@ plot.gauss_fit <- function(x, ...){
 #' @param x an object of class \code{gauss_fit}, \code{gev_fit} or \code{gev_fit}.
 #' @param ... Arguments to be passed to methods,
 #' @examples
-#' ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+#' ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 #'print(ga_fit)
-#' ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
+#' ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 #'print(ge_fit)
-#' gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
+#' gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year", qthreshold=0.9)
 #'print(gp_fit)
 #' @export
 print.gpd_fit <- function(x, ...){
