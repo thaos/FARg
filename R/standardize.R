@@ -24,7 +24,6 @@
 #'pnt0 <- set_pnt(t0, xp, time_var="year", tas)
 #'get_far(y_std, y_std_fit, pnt0, pnt1, under_threshold=TRUE)
 #'boot_far(y_std,  y_std_fit, xp, t0, t1, under_threshold=TRUE)
-#' @export
 standardize <- function(y, data, mu_mod=~1, sig2_mod=~1){
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
@@ -103,13 +102,11 @@ transform_newdat.std <- function(y_trans, y, newdata, ...){
 #'pnt1_bc <- transform_pnt(y_bc, pnt1)
 #'pnt0_bc <- transform_pnt(y_bc, pnt0)
 #'get_far(y_bc_fit, pnt0_bc, pnt1_bc, under_threshold=TRUE)
-#' @export
 transform_pnt <- function(y_trans, pnt, ...){
  UseMethod("transform_pnt")
 }
 
 #' @rdname transform_pnt
-#' @export
 transform_pnt.std <- function(y_trans, pnt, ...){
   pnt$y <- as.numeric(transform_newdat.std(y_trans, y=pnt$y, newdata=pnt[, -1]))
   pnt

@@ -11,7 +11,6 @@ set_fparam <- function(f, gfit){
 
 #' @rdname get_far 
 #' @param y_fit an object of class gauss_fit, gev_fit or gpd_fit. Only needed if the argument object if of class trans 
-#' @export
 get_far.trans <- function(object, y_fit, pnt0, pnt1, ...){
   pnt1_trans <- transform_pnt(object, pnt1)
   pnt0_trans <- transform_pnt(object, pnt0)
@@ -21,7 +20,6 @@ get_far.trans <- function(object, y_fit, pnt0, pnt1, ...){
 
 #' @rdname get_p 
 #' @param y_fit an object of class gauss_fit, gev_fit or gpd_fit. Only needed if the argument object if of class trans 
-#' @export
 get_p.trans <- function(object, y_fit, pnt, ...){
   pnt_trans <- transform_pnt(object, pnt)
   p <- get_p(y_fit, pnt_trans, ...)
@@ -60,7 +58,6 @@ boot_fun.trans <- function(object, y_fit, indices, get_fun, use_init=TRUE, ...){
 }
 
 #' @rdname boot_far 
-#' @export
 boot_far.trans <- function(object, y_fit, xp, t0, t1, ci_p=0.95, use_init=TRUE, R=250, ...){
   pnt0 <- set_pnt(t0, xp, y_fit$time_var, y_fit$data)
   pnt1 <- set_pnt(t1, xp, y_fit$time_var, y_fit$data)
@@ -76,7 +73,6 @@ boot_far.trans <- function(object, y_fit, xp, t0, t1, ci_p=0.95, use_init=TRUE, 
 }
 
 #' @rdname boot_p 
-#' @export
 boot_p.trans <- function(object, y_fit, xp, t, ci_p=0.95, use_init=TRUE, R=250, ...){
   pnt <- set_pnt(t, xp, y_fit$time_var, y_fit$data)
   p_mle <- get_p.trans(object, y_fit, pnt, ...)

@@ -10,7 +10,6 @@ NULL
 #' @param x a vector of values.
 #' @param lambda the scalar parameter of the boxcox transformation.
 #' @return returns a vector of transformed values.
-#' @export
 bc <- function(x,lambda){
   y=NA
   if(lambda!=0){y=(x^lambda-1)/lambda}
@@ -58,7 +57,6 @@ lambda_prof <- function(lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, init=
 #'pnt0 <- set_pnt(t0, xp, time_var="year", tas)
 #'get_far(y_bc, y_bc_fit, pnt0, pnt1, under_threshold=TRUE)
 #'\donttest{ boot_ic(y_bc,  y_bc_fit, xp, t0, t1, under_threshold=TRUE)}
-#' @export
 bc_fit=function(l_lambda, y, data, mu_mod=~1, sig2_mod=~1, time_var, ci_p=.95, to_plot=FALSE){
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
@@ -122,7 +120,6 @@ transform_newdat.bc_fit <- function(y_trans, y, newdata, ...){
 }
 
 #' @rdname transform_pnt
-#' @export
 transform_pnt.bc_fit <- function(y_trans, pnt, ...){
   # if several y in pnt data.frame, it takes the first one
   pnt$y <- as.numeric(transform_newdat.bc_fit(y_trans, y=pnt$y, newdata=pnt[, -1])$y_std)
