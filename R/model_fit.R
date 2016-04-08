@@ -65,7 +65,7 @@ complete_formula <- function(y, uncomplete_f){
 gauss_negll <- function(y, mu, sig){
   n <- length(y)
   stopifnot(length(mu) == n & length(sig) == n)
-	negll <- -0.5*(-n*log(2*pi)-sum(log(sig)) - sum((y-mu)^2/sig))
+	negll <- -0.5*(-n*log(2*pi)-sum(log(sig^2)) - sum((y-mu)^2/sig^2))
 	if(is.na(negll)) negll <- 10^6
 	negll
 }
@@ -129,12 +129,12 @@ gauss_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 	gauss_lik <- function(init){
     init_f <- format_init.gauss_fit(init, mu_terms, sig_terms)
     mu <- get_param(init_f$mu, mu_mat)
-  sig <- get_param(init_f$sig, sig_mat)
+    sig <- exp(get_param(init_f$sig, sig_mat))
 		gauss_negll(y, mu, sig) 
 	}
 	if(is.null(init)){
 		y_fit <- lm.fit(x=model.matrix(mu_mod, data=data), y=y)
-		fit_res2 <- residuals(y_fit)^2
+		fit_res2 <- log(residuals(y_fit)^2)
 		var_fit  <- lm.fit(x=model.matrix(sig_mod, data=data), y=fit_res2)
 		init <- c(coefficients(y_fit), coefficients(var_fit))
 		print("--- Parameters Initialization -----")
@@ -393,7 +393,7 @@ compute_par.gev_fit <- function(object, newdata){
 #' @export
 compute_par.gauss_fit <- function(object, newdata){
   init_f <- format_init.gauss_fit(object$par,  object$mu_terms, object$sig_terms)
-  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata), get_param_formula(init_f$sig, object$sig_terms, newdata))
+  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata), exp(get_param_formula(init_f$sig, object$sig_terms, newdata)))
   colnames(ans) <- c("mu", "sig") 
   ans
 }
