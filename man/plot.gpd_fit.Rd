@@ -20,7 +20,7 @@ Diagnostic plots of the fit : qqplot, density of fitted vs theorical density, ti
 \examples{
 data(tas)
 #Example with the same covariate for the mean and variance parameter
-gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
+gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year", qthreshold=0.9)
 # get the values of the mean and variance parameters of the GEV at each time
 compute_par(gp_fit, tas)
 # plot diagnostic plot of the fit : qqplot, density of fitted vs theorical density, times series ans return levels

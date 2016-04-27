@@ -20,7 +20,7 @@ Diagnostic plots of the fit : standardized residuals plots, qqplot, density of f
 \examples{
 data(tas)
 #Example with the same covariate for the mean and variance parameter
-ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
+ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 # get the values of the mean and variance parameters of the GEV at each time
 compute_par(ge_fit, tas)
 # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels

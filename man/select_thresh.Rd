@@ -13,7 +13,7 @@ select_thresh(tc)
 returns the value of the threshold selected
 }
 \description{
-Select trheshold from threshold stability plot from the tcplot function of the evmix package.
+Select threshold from threshold stability plot from the tcplot function of the evmix package.
 }
 \details{
 The threhshold is selected such as as the minimum threshold for which the transformed parameters of the GPD model fitted are within the confidence intervals for every higher threshold.

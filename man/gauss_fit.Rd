@@ -4,23 +4,26 @@
 \alias{gauss_fit}
 \title{Fit a time serie as independent gaussians.}
 \usage{
-gauss_fit(y, data, mu_mod = ~1, sig2_mod = ~1, time_var, init = NULL)
+gauss_fit(y, data, mu_mod = ~1, sig_mod = ~1, sig_link = "log", time_var,
+  init = NULL)
 }
 \arguments{
 \item{y}{the time serie to be fitted.}
 
-\item{data}{a data.frame object with  where the function looks first for the variables y, time_var and the covariates specified in the mu_mod and sig2_mod arguments.}
+\item{data}{a data.frame object with  where the function looks first for the variables y, time_var and the covariates specified in the mu_mod and sig_mod arguments.}
 
 \item{mu_mod}{a formula defining the covariates the mean parameter of the gaussian depends linearly on.}
 
-\item{sig2_mod}{a formula defining the covariates the variance parameter of the gaussian depends linearly on.}
+\item{sig_mod}{a formula defining the covariates of the standard deviation parameter of the gaussian depends linearly on.}
+
+\item{sig_link}{a link function name for the parameter sigma: sig_link(sigma) is a linear function of the covariates.}
 
 \item{time_var}{a variable used to define the time in the time serie. It can also be a string giving the variable name.}
 
 \item{init}{vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using one iteration of feasible GLS.}
 }
 \value{
-returns an object of class gauss_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gauss_fit
+returns an object of class gauss_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gauss_fit are also returned in the list.
 }
 \description{
 \code{gauss_fit} fits a time serie as independant gaussians where the mean and the variance depend linearly on a set of covariates.
@@ -31,7 +34,7 @@ MLE fit of a time serie y as independant gaussians where the mean and the varian
 \examples{
 data(tas)
 #Example with the same covariate for the mean and variance parameter
-ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 # get the values of the mean and variance parameters of the gaussian at each time
 compute_par(ga_fit, tas)
 # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels

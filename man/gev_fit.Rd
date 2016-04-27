@@ -4,7 +4,8 @@
 \alias{gev_fit}
 \title{Fit a time serie with a GEV distribution  .}
 \usage{
-gev_fit(y, data, mu_mod = ~1, sig_mod = ~1, time_var, init = NULL)
+gev_fit(y, data, mu_mod = ~1, sig_mod = ~1, sig_link = "log", time_var,
+  init = NULL)
 }
 \arguments{
 \item{y}{the time serie to be fitted.}
@@ -15,12 +16,14 @@ gev_fit(y, data, mu_mod = ~1, sig_mod = ~1, time_var, init = NULL)
 
 \item{sig_mod}{a formula defining the covariates the scale parameter of the GEV depends linearly on.}
 
+\item{sig_link}{a link function name for the parameter sigma: sig_link(sigma) is a linear function of the covariates.}
+
 \item{time_var}{a variable used to define the time in the time serie. It can also be a string giving the variable name.}
 
 \item{init}{vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using the function fevd from the extRemes packages.}
 }
 \value{
-returns an object of class gev_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gev_fit.
+returns an object of class gev_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gev_fit are included in the list as well.
 }
 \description{
 \code{gev_fit} fits a time serie with a GEV distribution a where the location and scale parameters depend linearly on a set of covariates.
@@ -31,7 +34,7 @@ MLE fit of a time serie y using a GEV distribution  where the location and the s
 \examples{
 data(tas)
 #Example with the same covariate for the mean and variance parameter
-ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
+ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 # get the values of the mean and variance parameters of the GEV at each time
 compute_par(ge_fit, tas)
 # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels

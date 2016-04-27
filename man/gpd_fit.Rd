@@ -4,8 +4,8 @@
 \alias{gpd_fit}
 \title{Fit a time serie with a GPD distribution  .}
 \usage{
-gpd_fit(y, data, mu_mod = ~1, sig_mod = ~1, time_var, qthreshold,
-  init = NULL)
+gpd_fit(y, data, mu_mod = ~1, sig_mod = ~1, sig_link = "log", time_var,
+  qthreshold, init = NULL)
 }
 \arguments{
 \item{y}{the time serie to be fitted.}
@@ -16,6 +16,8 @@ gpd_fit(y, data, mu_mod = ~1, sig_mod = ~1, time_var, qthreshold,
 
 \item{sig_mod}{a formula defining the covariates the scale parameter of the GPD depends linearly on.}
 
+\item{sig_link}{a link function name for the parameter sigma: sig_link(sigma) is a linear function of the covariates.}
+
 \item{time_var}{a variable used to define the time in the time serie. It can also be a string giving the variable name.}
 
 \item{qthreshold}{the level of quantile used to set the GPD threshold.}
@@ -23,7 +25,7 @@ gpd_fit(y, data, mu_mod = ~1, sig_mod = ~1, time_var, qthreshold,
 \item{init}{vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using the function fevd from the extRemes packages.}
 }
 \value{
-returns an object of class gpd_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gpd_fit.
+returns an object of class gpd_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gpd_fit are included in the list as well.
 }
 \description{
 \code{gpd_fit} fits a time serie with a GPD distribution a where  scale parameter depend linearly on a set of covariates.
@@ -34,7 +36,7 @@ MLE fit of a time serie y using a GPD distribution  where the scale parameter de
 \examples{
 data(tas)
 #Example with the same covariate for the mean and variance parameter
-gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
+gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year", qthreshold=0.9)
 # get the values of the mean and variance parameters of the GPD at each time
 compute_par(gp_fit, tas)
 # plot diagnostic plot of the fit : qqplot, density of fitted vs theorical density, times series ans return levels

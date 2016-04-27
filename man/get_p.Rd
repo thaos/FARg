@@ -7,20 +7,20 @@
 \alias{get_p.gpd_fit}
 \title{get_p generic.}
 \usage{
-get_p(y_fit, pnt, ...)
+get_p(object, ...)
 
-\method{get_p}{gauss_fit}(y_fit, pnt, ...)
+\method{get_p}{gauss_fit}(object, pnt, ...)
 
-\method{get_p}{gpd_fit}(y_fit, pnt, under_threshold = FALSE, ...)
+\method{get_p}{gpd_fit}(object, pnt, under_threshold = FALSE, ...)
 
-\method{get_p}{gev_fit}(y_fit, pnt, ...)
+\method{get_p}{gev_fit}(object, pnt, ...)
 }
 \arguments{
-\item{y_fit}{an object of class gauss_fit, gev_fit, gpd_fit.}
-
-\item{pnt}{a point which consists of a line of data.frame containing the same variables used for the fit. It can bet set using the function \code{set_pnt}}
+\item{object}{an object of class gauss_fit, gev_fit, gpd_fit.}
 
 \item{...}{Arguments to be passed to methods,}
+
+\item{pnt}{a point which consists of a line of data.frame containing the same variables used for the fit. It can bet set using the function \code{set_pnt}}
 
 \item{under_threshold}{used for gpd_fit. It tells whether it provides an estimated when the point is under the GPD threshold. In which case, gives the empirical probability obtained by quantile regression.}
 }
@@ -38,9 +38,9 @@ Compute the probability of exeeding a given point.
 \examples{
 data(tas)
 
-ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year")
-gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig_mod=~avg_gbl_tas, time_var="year", qthreshold=0.9)
-ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+ge_fit <- gev_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
+gp_fit <- gpd_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year", qthreshold=0.9)
+ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 
 t1 <- 2003
 t0 <- 1990

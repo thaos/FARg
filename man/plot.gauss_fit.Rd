@@ -20,7 +20,7 @@ Diagnostic plots of the fit : standardized residuals plots, qqplot, density of f
 \examples{
 data(tas)
 #Example with the same covariate for the mean and variance parameter
-ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~avg_gbl_tas, sig2_mod=~avg_gbl_tas, time_var="year")
+ga_fit <- gauss_fit(eur_tas, data=tas, mu_mod=~gbl_tas, sig_mod=~gbl_tas, time_var="year")
 # get the values of the mean and variance parameters of the gaussian at each time
 compute_par(ga_fit, tas)
 # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
