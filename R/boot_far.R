@@ -14,7 +14,6 @@ simple_boot <- function(y_fit, statistic, R=250, seed_init=NULL, ...){
 #' 
 #' Resamplin bootstrap is done by drawing with replacement points (which are at least pairs of date and time serie value) to reconstruct a bootstrap time series. Thus, in the bootstraped sample, there might be dates with no points and dates with several points. 
 #' @param object an object of class gauss_fit, gev_fit, gpd_fit or of class trans. If object is of class trans, the argument y_fit must be passed.
-#' @param y_fit an object of class gauss_fit, gev_fit or gpd_fit. Only needed if the argument object is of class trans 
 #' @param xp the threshold used to compute the probability of exeeding that threshold.
 #' @param t0 the time t0 to compute the probability of exeeding xp. If the time t0 is not present in dataset used for fitting the model, the closes time of the dataset is used.
 #' @param t1 the time t1 to compute the probability of exeeding xp. If the time t1 is not present in dataset used for fitting the model, the closes time of the dataset is used.
@@ -67,7 +66,6 @@ boot_far.default <- function(object, xp, t0, t1, ci_p=0.95, use_init=TRUE, R=250
 #' 
 #' Resamplin bootstrap is done by drawing with replacement points (which are at least pairs of date and time serie value) to reconstruct a bootstrap time series. Thus, in the bootstraped sample, there might be dates with no points and dates with several points. 
 #' @param object an object of class gauss_fit, gev_fit, gpd_fit or of class trans. If object is of class trans, the argument y_fit must be passed.
-#' @param y_fit an object of class gauss_fit, gev_fit or gpd_fit. Only needed if the argument object is of class trans 
 #' @param xp the threshold used to compute the probability of exeeding that threshold.
 #' @param t the time t to compute the probability of exeeding xp. If the time t0 is not present in dataset used for fitting the model, the closes time of the dataset is used.
 #' @param ci_p the confidence level of the confidence intervals (between 0 and 1).
@@ -129,20 +127,20 @@ boot_sample.gpd_fit <- function(object, indices, use_init=TRUE, ...){
   init <- NULL
   if(use_init) init <- object$par
   bdat <- object$data[indices,]
-  b_fit <- gpd_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$time_var, qthreshold, init)
+  b_fit <- gpd_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$sig_link, object$time_var, qthreshold, init)
 }
 
 boot_sample.gev_fit <- function(object, indices, pnt0, pnt1, use_init=TRUE, ...){
   init <- NULL
   if(use_init) init <- object$par
   bdat <- object$data[indices,]
-  b_fit <- gev_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$time_var, init)
+  b_fit <- gev_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$sig_link, object$time_var, init)
 }
 
 boot_sample.gauss_fit <- function(object, indices, pnt0, pnt1, use_init=TRUE, ...){
   init <- NULL
   if(use_init) init <- object$par
   bdat <- object$data[indices,]
-  b_fit <- gauss_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$time_var, init)
+  b_fit <- gauss_fit(object$y[indices], bdat, object$mu_mod, object$sig_mod, object$sig_link, object$time_var, init)
 }
 

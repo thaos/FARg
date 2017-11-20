@@ -1,6 +1,7 @@
 #' @importFrom extRemes levd 
 #' @importFrom extRemes fevd 
 #' @importFrom extRemes pevd 
+#' @importFrom extRemes qevd 
 #' @importFrom extRemes plot.fevd 
 #' @importFrom extRemes plot.fevd.mle 
 #' @importFrom quantreg rq 
@@ -65,9 +66,12 @@ complete_formula <- function(y, uncomplete_f){
 gauss_negll <- function(y, mu, sig){
   n <- length(y)
   stopifnot(length(mu) == n & length(sig) == n)
-	negll <- -0.5*(-n*log(2*pi)-sum(log(sig^2)) - sum((y-mu)^2/sig^2))
-	if(is.na(negll)) negll <- 10^6
-	negll
+  if(any(sig<0)) {
+	negll <- Inf 
+  } else {
+	negll <- n*log(2*pi) + sum(log(sig^2)) + sum((y-mu)^2/sig^2)
+  }
+  negll
 }
 
 gpd_negll <- function(y, threshold, sig, xi) {
@@ -98,6 +102,7 @@ format_init.gauss_fit <- function(init, mu_terms, sig_terms){
 #' @param data a data.frame object with  where the function looks first for the variables y, time_var and the covariates specified in the mu_mod and sig_mod arguments.
 #' @param mu_mod a formula defining the covariates the mean parameter of the gaussian depends linearly on.
 #' @param sig_mod a formula defining the covariates of the standard deviation parameter of the gaussian depends linearly on.
+#' @param sig_link a link function name for the parameter sigma: sig_link(sigma) is a linear function of the covariates.
 #' @param time_var a variable used to define the time in the time serie. It can also be a string giving the variable name.
 #' @param init vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using one iteration of feasible GLS.
 #' @return returns an object of class gauss_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gauss_fit are also returned in the list.
@@ -110,7 +115,7 @@ format_init.gauss_fit <- function(init, mu_terms, sig_terms){
 #' # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
 #'plot(ga_fit)
 #' @export
-gauss_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
+gauss_fit <- function(y, data, mu_mod=~1, sig_mod=~1, sig_link="log",  time_var, init=NULL){
   stopifnot(exist_time_var(time_var, data))
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
@@ -126,15 +131,16 @@ gauss_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
   sig_mat <- model.matrix(sig_mod, data)
 	mu_terms <- terms(mu_mod)
 	sig_terms <- terms(sig_mod)
+  link <- make.link(sig_link)
 	gauss_lik <- function(init){
     init_f <- format_init.gauss_fit(init, mu_terms, sig_terms)
     mu <- get_param(init_f$mu, mu_mat)
-    sig <- exp(get_param(init_f$sig, sig_mat))
+    sig <- link$linkinv(get_param(init_f$sig, sig_mat))
 		gauss_negll(y, mu, sig) 
 	}
 	if(is.null(init)){
 		y_fit <- lm.fit(x=model.matrix(mu_mod, data=data), y=y)
-		fit_res2 <- log(residuals(y_fit)^2)
+		fit_res2 <- link$linkfun(residuals(y_fit)^2)
 		var_fit  <- lm.fit(x=model.matrix(sig_mod, data=data), y=fit_res2)
 		init <- c(coefficients(y_fit), coefficients(var_fit))
 		print("--- Parameters Initialization -----")
@@ -154,6 +160,7 @@ gauss_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 	y_fit$mu_terms <- mu_terms
 	y_fit$sig_terms <- sig_terms
   y_fit$time_var <- time_var
+  y_fit$sig_link<- sig_link
 	attr(y_fit, "class")= "gauss_fit"
 	y_fit
 }
@@ -174,6 +181,7 @@ format_init.gpd_fit <- function(init,  sig_terms){
 #' @param data a data.frame object with  where the function looks first for the variables y, time_var and the covariates specified in the mu_mod and sig_mod arguments.
 #' @param mu_mod a formula defining the covariates to be used in quantile regression to set the threshold of the GPD. 
 #' @param sig_mod a formula defining the covariates the scale parameter of the GPD depends linearly on.
+#' @param sig_link a link function name for the parameter sigma: sig_link(sigma) is a linear function of the covariates.
 #' @param time_var a variable used to define the time in the time serie. It can also be a string giving the variable name.
 #' @param init vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using the function fevd from the extRemes packages.
 #' @param qthreshold the level of quantile used to set the GPD threshold.
@@ -187,7 +195,7 @@ format_init.gpd_fit <- function(init,  sig_terms){
 #' # plot diagnostic plot of the fit : qqplot, density of fitted vs theorical density, times series ans return levels
 #'plot(gp_fit)
 #'@export
-gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=NULL){
+gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, sig_link="log", time_var, qthreshold, init=NULL){
   stopifnot(exist_time_var(time_var, data))
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse="")
@@ -203,19 +211,21 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
   sig_mat <- model.matrix(sig_mod, data)
 	mu_terms <- terms(mu_mod)
 	sig_terms <- terms(sig_mod)
+  link <- make.link(sig_link)
   completed_formula <- complete_formula(y_name, mu_mod)
   rq_fitted <- rq(as.formula(completed_formula),data=data, tau=qthreshold)
 	threshold <- predict(rq_fitted)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
-		init <- fevd(as.formula(paste(y_name,"~ 1")), data, threshold, scale.fun=sig_mod, type="GP", method="MLE")$results
+    use.phi <- (sig_link == "log")
+    init <- fevd(as.formula(paste(y_name,"~ 1")), data, threshold, scale.fun=sig_mod, type="GP", method="MLE", use.phi=use.phi)$results
 		print(paste("neg-likelihood =", init$value))
 		print(paste("mle =", do.call(paste, as.list(init$par))))
 		init <- init$par
 	}
 	gpd_lik <- function(init){
     init_f <- format_init.gpd_fit(init,  sig_terms)
-    sig <- get_param(init_f$sig , sig_mat)
+    sig <- link$linkinv(get_param(init_f$sig , sig_mat))
 		gpd_negll(y, threshold, sig, init_f$xi) 
 	}
 	y_fit=nlminb(start=init, gpd_lik) 
@@ -234,6 +244,7 @@ gpd_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, qthreshold, init=N
 	y_fit$rq_fitted <- rq_fitted 
 	y_fit$rate <- mean(y>threshold)
   y_fit$time_var <- time_var
+  y_fit$sig_link <- sig_link
 	attr(y_fit, "class")= "gpd_fit"
 	y_fit
 }
@@ -257,6 +268,7 @@ format_init.gev_fit <- function(init, mu_terms, sig_terms){
 #' @param data a data.frame object with  where the function looks first for the variables y, time_var and the covariates specified in the mu_mod and sig_mod arguments.
 #' @param mu_mod a formula defining the covariates the location parameter of the GEV depends linearly on.
 #' @param sig_mod a formula defining the covariates the scale parameter of the GEV depends linearly on.
+#' @param sig_link a link function name for the parameter sigma: sig_link(sigma) is a linear function of the covariates.
 #' @param time_var a variable used to define the time in the time serie. It can also be a string giving the variable name.
 #' @param init vector of initialization parameter for the minimization of the negative log-likelihood. if NULL, the initialisation is done using the function fevd from the extRemes packages.
 #' @return returns an object of class gev_fit. It contains the nlminb output which provides the estimated parameters as well the minimum of the negative log-likelihood. The arguments use to call gev_fit are included in the list as well. 
@@ -269,7 +281,7 @@ format_init.gev_fit <- function(init, mu_terms, sig_terms){
 #' # plot diagnostic plot of the fit : standardized residuals plots, qqplot, density of fitted vs theorical density, times series ans return levels
 #'plot(ge_fit)
 #' @export
-gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
+gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, sig_link="log", time_var, init=NULL){
   stopifnot(exist_time_var(time_var, data))
   stopifnot(!is.null(data))
   y_name <- paste(deparse(substitute(y)), collapse=" ")
@@ -285,9 +297,10 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
   sig_mat <- model.matrix(sig_mod, data)
 	mu_terms <- terms(mu_mod)
 	sig_terms <- terms(sig_mod)
+  link <- make.link(sig_link)
 	if(is.null(init)){
 		print("--- Parameters Initialization -----")
-		init  <- fevd(as.formula(paste(y_name, "~ 1")), data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE")$results
+		init  <- fevd(as.formula(paste(y_name, "~ 1")), data, location.fun=mu_mod, scale.fun=sig_mod, method="MLE", use.phi=TRUE)$results
 		print(paste("neg-likelihood =", init$value))
 		print(paste("mle =", do.call(paste, as.list(init$par))))
 		init <- init$par
@@ -295,7 +308,7 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 	gev_lik <- function(init){
     init_f <- format_init.gev_fit(init, mu_terms, sig_terms)
     mu <- get_param(init_f$mu, mu_mat)
-    sig <- get_param(init_f$sig, sig_mat)
+    sig <- link$linkinv(get_param(init_f$sig, sig_mat))
 		gev_negll(y, mu, sig, init_f$xi) 
 	}
 	y_fit=nlminb(start=init, gev_lik)
@@ -312,6 +325,7 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 	y_fit$mu_terms <- mu_terms
 	y_fit$sig_terms <- sig_terms
   y_fit$time_var <- time_var
+  y_fit$sig_link <- sig_link
 	y_fit
 }
 
@@ -332,7 +346,7 @@ gev_fit <- function(y, data, mu_mod=~1, sig_mod=~1, time_var, init=NULL){
 #'plot(ge_fit)
 #' @export
 plot.gev_fit <- function(x, ...){
-  res <- fevd(x$y, x$data, location.fun=x$mu_mod, scale.fun=x$sig_mod, method="MLE", initial=x$results$par)
+  res <- fevd(x$y, x$data, location.fun=x$mu_mod, scale.fun=x$sig_mod, method="MLE", use.phi=TRUE, initial=x$results$par)
   print(all.equal(x$par,res$results$par))
   plot(res)
 }
@@ -354,7 +368,7 @@ plot.gev_fit <- function(x, ...){
 #'plot(gp_fit)
 #' @export
 plot.gpd_fit <- function(x, ...){
-  res <- fevd(x$y, x$data, threshold=predict(x$rq_fitted), scale.fun=x$sig_mod, type="GP", method="MLE", initial=x$results$par)
+  res <- fevd(x$y, x$data, threshold=predict(x$rq_fitted), scale.fun=x$sig_mod, type="GP", method="MLE", use.phi=TRUE, initial=x$results$par)
   print(all.equal(x$par,res$results$par))
   plot(res)
 }
@@ -372,9 +386,10 @@ compute_par <- function(object, newdata){
 #' @describeIn compute_par returns the parameters of the fitted GPD at different times.
 #' @export
 compute_par.gpd_fit <- function(object, newdata){
+  link <- make.link(object$sig_link)
   threshold <- predict(object$rq_fitted, newdata)
   init_f <- format_init.gpd_fit(object$par,  object$sig_terms)
-  ans <- cbind(threshold, get_param_formula(init_f$sig , object$sig_terms, newdata),init_f$xi)
+  ans <- cbind(threshold, link$linkinv(get_param_formula(init_f$sig , object$sig_terms, newdata)),init_f$xi)
   colnames(ans) <- c("threshold", "sig", "xi")
   ans
 }
@@ -382,8 +397,9 @@ compute_par.gpd_fit <- function(object, newdata){
 #' @describeIn compute_par returns the parameters of the fitted GEV at different times.
 #' @export
 compute_par.gev_fit <- function(object, newdata){
+  link <- make.link(object$sig_link)
   init_f <- format_init.gev_fit(object$par, object$mu_terms, object$sig_terms)
-  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata),get_param_formula(init_f$sig, object$sig_terms, newdata), init_f$xi)
+  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata), link$linkinv(get_param_formula(init_f$sig, object$sig_terms, newdata)), init_f$xi)
   colnames(ans) <- c("mu", "sig", "xi")
   ans
 }
@@ -392,8 +408,9 @@ compute_par.gev_fit <- function(object, newdata){
 #' @describeIn compute_par returns the parameters of the fitted Gaussian at different times.
 #' @export
 compute_par.gauss_fit <- function(object, newdata){
+  link <- make.link(object$sig_link)
   init_f <- format_init.gauss_fit(object$par,  object$mu_terms, object$sig_terms)
-  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata), exp(get_param_formula(init_f$sig, object$sig_terms, newdata)))
+  ans <- cbind(get_param_formula(init_f$mu, object$mu_terms, newdata), link$linkinv(get_param_formula(init_f$sig, object$sig_terms, newdata)))
   colnames(ans) <- c("mu", "sig") 
   ans
 }

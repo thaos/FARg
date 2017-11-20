@@ -30,27 +30,30 @@ fit2lik <- function(y_fit){
 }
 
 fit2lik.gpd_fit <- function(y_fit, pnt0, pnt1, R){
+  link <- make.link(y_fit$sig_link)
 	gpd_lik <- function(init){
     init_f <- format_init.gpd_fit(init, y_fit$sig_terms)
-    sig <- get_param(init_f$sig , y_fit$sig_mat)
+    sig <- link$linkinv(get_param(init_f$sig , y_fit$sig_mat))
 		gpd_negll(y_fit$y, predict(y_fit$rq_fitted), sig, init_f$xi) 
 	}
 }
 
 fit2lik.gev_fit <- function(y_fit, pnt0, pnt1, R){
+  link <- make.link(y_fit$sig_link)
 	gev_lik <- function(init){
     init_f <- format_init.gev_fit(init, y_fit$mu_terms, y_fit$sig_terms)
     mu <- get_param(init_f$mu, y_fit$mu_mat)
-    sig <- get_param(init_f$sig, y_fit$sig_mat)
+    sig <- link$linkinv(get_param(init_f$sig, y_fit$sig_mat))
 		gev_negll(y_fit$y, mu, sig, init_f$xi) 
 	}
 }
 
 fit2lik.gauss_fit <- function(y_fit){
+  link <- make.link(y_fit$sig_link)
 	gauss_lik <- function(init){
       init_f <- format_init.gauss_fit(init, y_fit$mu_terms, y_fit$sig_terms)
       mu <- get_param(init_f$mu, y_fit$mu_mat)
-      sig <- get_param(init_f$sig, y_fit$sig_mat)
+      sig <- link$linkinv(get_param(init_f$sig, y_fit$sig_mat))
       gauss_negll(y_fit$y, mu, sig) 
 	}
 }

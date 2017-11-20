@@ -76,9 +76,9 @@ get_p <- function(object, ...){
 #' @export
 get_p.gauss_fit <- function(object, pnt, ...){
   par <- compute_par.gauss_fit(object, newdata=pnt[, -1])
-	res <- pnorm(pnt$y, mean=par[, 1], sd=sqrt(par[, 2]), lower.tail=FALSE)
+	res <- pnorm(pnt$y, mean=par[, 1], sd=par[, 2], lower.tail=FALSE)
 	res <- c(res, par[, 1], par[, 2])
-	names(res)=c("p","mu","sigma2")
+	names(res)=c("p","mu","sigma")
 	res
 }
 
