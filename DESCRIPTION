@@ -18,3 +18,4 @@ Imports:
     evmix,
     MASS
 Suggets: testthat
+RoxygenNote: 6.0.1
