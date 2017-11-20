@@ -1,6 +1,18 @@
-#' @importFrom alabama auglag 
+#' @importFrom alabama auglag
 
-constrain <- function(y_fit, pnt0, pnt1, R=0.5, ...){
+constrain_p <- function(y_fit, pnt, P, ...){
+	res=function(par){
+		tc=try({
+			y_fit$par <- par
+			p <- get_p(y_fit, pnt, ...)[1]
+		},silent=TRUE)
+		if(class(tc)=="try-error" )return(10^6)
+    abs(p-P)
+	}
+	res
+}
+
+constrain_far <- function(y_fit, pnt0, pnt1, R=0.5, ...){
 	res=function(par){
 		tc=try({
 			y_fit$par <- par
@@ -8,48 +20,51 @@ constrain <- function(y_fit, pnt0, pnt1, R=0.5, ...){
 			ratio <- 1 - far[1]
 		},silent=TRUE)
 		if(class(tc)=="try-error" )return(10^6)
-		ratio-R	
+		abs(ratio-R)	
 	}
 	res
 }
 
-optimize_profile <- function(y_fit, pnt0, pnt1, R){
-	UseMethod("optimize_profile")
+fit2lik <- function(y_fit){
+	UseMethod("fit2lik")
 }
 
-optimize_constr <- function(y_fit, pnt0, pnt1, R){
-	tc=try({
-		ans <- optimize_profile(y_fit, pnt0, pnt1, R)
-	})
-	if(class(tc)=="try-error" ){
-		print("Cant optimize properly for this value of the ratio p0/p1")
-		return(10^6)
-	}
-	ans
-}
-
-optimize_profile.gpd_fit <- function(y_fit, pnt0, pnt1, R){
+fit2lik.gpd_fit <- function(y_fit, pnt0, pnt1, R){
+  link <- make.link(y_fit$sig_link)
 	gpd_lik <- function(init){
-		gpd_negll(y_fit$ydat$y, predict(y_fit$rq_fitted), init[1], init[2], init[3], y_fit$ydat$mu_var, y_fit$ydat$sig_var)
+    init_f <- format_init.gpd_fit(init, y_fit$sig_terms)
+    sig <- link$linkinv(get_param(init_f$sig , y_fit$sig_mat))
+		gpd_negll(y_fit$y, predict(y_fit$rq_fitted), sig, init_f$xi) 
 	}
-	ans <- auglag(par=y_fit$par, fn=gpd_lik, heq=constrain(y_fit, pnt0, pnt1, R=R), control.outer=list(method="nlminb",trace=FALSE))
-	ans
 }
 
-optimize_profile.gev_fit <- function(y_fit, pnt0, pnt1, R){
+fit2lik.gev_fit <- function(y_fit, pnt0, pnt1, R){
+  link <- make.link(y_fit$sig_link)
 	gev_lik <- function(init){
-		gev_negll(y_fit$ydat$y, init[1], init[2], init[3], init[4], init[5], y_fit$ydat$mu_var, y_fit$ydat$sig_var)
+    init_f <- format_init.gev_fit(init, y_fit$mu_terms, y_fit$sig_terms)
+    mu <- get_param(init_f$mu, y_fit$mu_mat)
+    sig <- link$linkinv(get_param(init_f$sig, y_fit$sig_mat))
+		gev_negll(y_fit$y, mu, sig, init_f$xi) 
 	}
-	ans <- auglag(par=y_fit$par, fn=gev_lik, heq=constrain(y_fit, pnt0, pnt1, R=R), control.outer=list(method="nlminb",trace=FALSE))
-	ans
 }
 
-optimize_profile.gauss_fit <- function(y_fit, pnt0, pnt1, R){
+fit2lik.gauss_fit <- function(y_fit){
+  link <- make.link(y_fit$sig_link)
 	gauss_lik <- function(init){
-		gauss_negll(y_fit$ydat$y, init[1], init[2], init[3], init[4], y_fit$ydat$mu_var, y_fit$ydat$sig_var)
+      init_f <- format_init.gauss_fit(init, y_fit$mu_terms, y_fit$sig_terms)
+      mu <- get_param(init_f$mu, y_fit$mu_mat)
+      sig <- link$linkinv(get_param(init_f$sig, y_fit$sig_mat))
+      gauss_negll(y_fit$y, mu, sig) 
 	}
-	ans <- auglag(par=y_fit$par, fn=gauss_lik, heq=constrain(y_fit, pnt0, pnt1, R=R), control.outer=list(method="nlminb",trace=FALSE))
-	ans
+}
+
+
+optimize_p_prof <- function(y_fit, pnt, P){
+	ans <- auglag(par=y_fit$par, fn=fit2lik(y_fit), heq=constrain_p(y_fit, pnt, P=P), control.outer=list(method="nlminb",trace=FALSE))
+}
+
+optimize_far_prof <- function(y_fit, pnt0, pnt1, R){
+	ans <- auglag(par=y_fit$par, fn=fit2lik(y_fit), heq=constrain_far(y_fit, pnt0, pnt1, R=R), control.outer=list(method="nlminb",trace=FALSE))
 }
 
 extract_l<- function(x){
@@ -60,7 +75,16 @@ extract_l<- function(x){
 	res
 }
 
-profil_optim <- function(y_fit, pnt0, pnt1, R){
-	fit <- optimize_constr(y_fit, pnt0, pnt1, R)
+profil_optim <- function(y_fit, optim_profil, ...){
+	fit <- optimize_constr(y_fit, optim_profil, ...)
 	extract_l(fit)
 }
+
+optimize_constr <- function(y_fit, optim_profil, ...){
+	fit <- tryCatch(expr=optim_profil(y_fit, ...), 
+                  error=function(e){
+                    print("Cant optimize properly for this value")
+                    return(10^6)
+                  })
+}
+
