@@ -63,16 +63,19 @@ complete_formula <- function(y, uncomplete_f){
 }
 
 
+# gauss_negll: computes gaussian log-likelihood
+#		Note: we take care to put infinite likelihood if sif<0!!
 gauss_negll <- function(y, mu, sig){
-  n <- length(y)
-  stopifnot(length(mu) == n & length(sig) == n)
-  if(any(sig<0)) {
-	negll <- Inf 
-  } else {
-	negll <- n*log(2*pi) + sum(log(sig^2)) + sum((y-mu)^2/sig^2)
-  }
-  negll
+	n <- length(y)
+	stopifnot(length(mu) == n & length(sig) == n)
+	if(any(sig<0)) {
+		negll <- Inf 
+	} else {
+		negll <- n*log(2*pi) + sum(log(sig^2)) + sum((y-mu)^2/sig^2)
+	}
+	return(negll)
 }
+
 
 gpd_negll <- function(y, threshold, sig, xi) {
   n <- length(y)
